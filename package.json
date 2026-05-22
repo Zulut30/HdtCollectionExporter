@@ -1,0 +1,13 @@
+{
+  "name": "hdt-collection-exporter",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "check": "node --check web/collection-card/app.js && node --check api/profile.js"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/blob": "^2.4.0"
+  }
+}

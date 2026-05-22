@@ -7,3 +7,4 @@ obj/
 *.zip
 /manacost_logo.jpg
 /artifacts/
+node_modules/

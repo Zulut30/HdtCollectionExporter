@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Карточка коллекции Manacost</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="styles.css?v=quality-6" />
+    <link rel="stylesheet" href="styles.css?v=quality-8" />
   </head>
   <body>
     <main class="app-shell">
@@ -32,12 +32,17 @@
           <img src="assets/ui/manacost_logo.jpg" alt="" width="46" height="46" decoding="async" />
           <span>Карточка коллекции Manacost</span>
         </a>
-        <div class="topbar-meta" aria-label="Статус приватности">
+        <nav class="app-nav" aria-label="Основное меню">
+          <button id="scanTabButton" class="nav-tab is-active" type="button" data-view="scan">Сканировать коллекцию</button>
+          <button id="leaderboardTabButton" class="nav-tab" type="button" data-view="leaderboard">Таблица лидеров</button>
+        </nav>
+        <div class="topbar-meta" aria-label="Статус сохранения">
           <span class="status-dot"></span>
-          Только локально
+          Приватное сохранение по Blizzard ID
         </div>
       </header>
 
+      <section id="scanView" class="app-view is-active">
       <section class="workspace" aria-label="Генератор карточки коллекции">
         <aside class="control-panel">
           <div class="panel-heading">
@@ -183,6 +188,95 @@
         </div>
         <div id="setBreakdown" class="expansion-list" aria-label="Выбор дополнения"></div>
       </section>
+      </section>
+
+      <section id="leaderboardView" class="app-view leaderboard-view" hidden aria-label="Таблица лидеров">
+        <div class="leaderboard-hero">
+          <div>
+            <span class="label">Публичные профили</span>
+            <h1>Таблица лидеров коллекций</h1>
+            <p>50 игроков с самыми заполненными коллекциями. Нажми на никнейм, чтобы открыть карты игрока.</p>
+          </div>
+          <button id="refreshLeaderboardButton" class="button secondary" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h10a6 6 0 1 1-5.2 9" />
+              <path d="M4 7l4-4" />
+              <path d="M4 7l4 4" />
+            </svg>
+            Обновить
+          </button>
+        </div>
+
+        <div class="leaderboard-layout">
+          <section class="leaderboard-panel">
+            <div class="leaderboard-panel-head">
+              <span class="label">Рейтинг</span>
+              <strong id="leaderboardStatus">Пока не загружен</strong>
+            </div>
+            <div class="leaderboard-table-wrap">
+              <table class="leaderboard-table">
+                <thead>
+                  <tr>
+                    <th>Место</th>
+                    <th>Игрок</th>
+                    <th>Покрытие</th>
+                    <th>Карты</th>
+                    <th>Золотые</th>
+                    <th>Пыль</th>
+                    <th>Обновлено</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboardRows"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="leaderboard-profile-panel" aria-live="polite">
+            <div id="leaderboardEmpty" class="leaderboard-empty">
+              <strong>Выбери игрока в таблице</strong>
+              <span>Здесь появится карточка профиля и дополнения с картами.</span>
+            </div>
+
+            <article id="leaderboardProfile" class="public-profile" hidden>
+              <div class="public-profile-head">
+                <div class="class-medallion public-medallion">
+                  <img id="leaderboardClassIcon" src="assets/class_icon/mage.png" alt="" width="56" height="56" decoding="async" />
+                </div>
+                <div>
+                  <span id="leaderboardProfileMeta" class="label">Публичный профиль</span>
+                  <h2 id="leaderboardProfileName">Игрок Hearthstone</h2>
+                  <p id="leaderboardProfileSubtitle">Нажми на дополнение, чтобы посмотреть карты.</p>
+                </div>
+              </div>
+
+              <dl class="leaderboard-metrics">
+                <div>
+                  <dt>Карт</dt>
+                  <dd id="leaderboardOwnedCards">-</dd>
+                </div>
+                <div>
+                  <dt>Золотых</dt>
+                  <dd id="leaderboardGoldenCards">-</dd>
+                </div>
+                <div>
+                  <dt>Пыли</dt>
+                  <dd id="leaderboardDust">-</dd>
+                </div>
+                <div>
+                  <dt>Покрытие</dt>
+                  <dd id="leaderboardCoverage">-</dd>
+                </div>
+              </dl>
+
+              <div class="leaderboard-sets-head">
+                <span class="label">Дополнения игрока</span>
+                <strong id="leaderboardSetsSummary">-</strong>
+              </div>
+              <div id="leaderboardSetBreakdown" class="expansion-list leaderboard-expansions"></div>
+            </article>
+          </section>
+        </div>
+      </section>
     </main>
 
     <div id="collectionModal" class="modal-shell" aria-hidden="true">
@@ -233,6 +327,14 @@
       </section>
     </div>
 
-    <script src="app.js?v=quality-6"></script>
+    <script>
+      if (!["localhost", "127.0.0.1", "::1"].includes(window.location.hostname)) {
+        const analyticsScript = document.createElement("script");
+        analyticsScript.defer = true;
+        analyticsScript.src = "/_vercel/insights/script.js";
+        document.head.appendChild(analyticsScript);
+      }
+    </script>
+    <script src="app.js?v=quality-8"></script>
   </body>
 </html>
