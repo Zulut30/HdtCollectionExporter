@@ -2,6 +2,8 @@
 
 Этот гайд объясняет, как установить HDT Collection Exporter by Manacost — плагин для [HearthSim/Hearthstone-Deck-Tracker](https://github.com/HearthSim/Hearthstone-Deck-Tracker).
 
+Для macOS/HSTracker смотри [поддержку HSTracker на macOS](HSTRACKER_MACOS.ru.md). HSTracker сейчас требует добавления Swift source adapter в сборку HSTracker; Windows DLL он загрузить не может.
+
 ## 1. Требования
 
 - Windows

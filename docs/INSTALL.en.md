@@ -2,6 +2,8 @@
 
 This guide explains how to install HDT Collection Exporter by Manacost, a plugin for [HearthSim/Hearthstone-Deck-Tracker](https://github.com/HearthSim/Hearthstone-Deck-Tracker).
 
+For macOS/HSTracker, see [HSTracker macOS Support](HSTRACKER_MACOS.en.md). HSTracker currently needs the Swift source adapter to be added to an HSTracker build; it cannot load the Windows HDT DLL.
+
 ## 1. Requirements
 
 - Windows

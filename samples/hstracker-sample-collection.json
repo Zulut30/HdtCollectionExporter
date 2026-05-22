@@ -1,0 +1,99 @@
+{
+  "exportedAt": "2026-05-22T12:20:00.000Z",
+  "source": "HSTracker macOS export by Manacost",
+  "version": 3,
+  "user": {
+    "battleTag": "Example#1234",
+    "accountHi": 123456789,
+    "accountLo": 987654321
+  },
+  "dust": 12345,
+  "cardBacks": [
+    1,
+    2,
+    155
+  ],
+  "favoriteCardBack": 155,
+  "favoriteHeroes": [
+    {
+      "heroKey": 2,
+      "dbfId": 274,
+      "cardId": "HERO_06",
+      "name": "Malfurion Stormrage",
+      "class": "DRUID"
+    }
+  ],
+  "playerRecords": [
+    {
+      "type": 1,
+      "records": [
+        {
+          "data": 274,
+          "wins": 10,
+          "losses": 4,
+          "ties": 0
+        }
+      ]
+    }
+  ],
+  "classStats": [
+    {
+      "class": "DRUID",
+      "wins": 10,
+      "losses": 4,
+      "ties": 0,
+      "games": 14,
+      "winrate": 0.7143,
+      "recordTypes": [
+        {
+          "type": 1,
+          "wins": 10,
+          "losses": 4,
+          "ties": 0,
+          "games": 14,
+          "heroDbfIds": [
+            274
+          ]
+        }
+      ]
+    }
+  ],
+  "favoriteClass": {
+    "class": "DRUID",
+    "reason": "mostGames",
+    "wins": 10,
+    "losses": 4,
+    "ties": 0,
+    "games": 14,
+    "winrate": 0.7143
+  },
+  "bestClassByWins": {
+    "class": "DRUID",
+    "reason": "mostWins",
+    "wins": 10,
+    "losses": 4,
+    "ties": 0,
+    "games": 14,
+    "winrate": 0.7143
+  },
+  "cards": [
+    {
+      "cardId": "CORE_EX1_169",
+      "dbfId": 169,
+      "name": "Innervate",
+      "set": "CORE",
+      "rarity": "FREE",
+      "class": "DRUID",
+      "normal": 2,
+      "golden": 0,
+      "diamond": 0,
+      "signature": 0,
+      "premiumTotal": 0,
+      "trialNormal": 0,
+      "trialGolden": 0,
+      "trialDiamond": 0,
+      "trialSignature": 0,
+      "ownedTotal": 2
+    }
+  ]
+}
