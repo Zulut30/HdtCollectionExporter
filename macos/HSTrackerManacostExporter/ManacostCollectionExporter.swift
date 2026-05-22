@@ -94,7 +94,7 @@ final class ManacostCollectionExporter {
         let exportedAt = Date()
         let current = try makeDocument(exportedAt: exportedAt, options: options)
 
-        guard let previous else {
+        guard let previous = previous else {
             try saveBaseline(current)
             return ManacostExportResult(
                 exportedAt: exportedAt,
@@ -290,7 +290,7 @@ final class ManacostCollectionExporter {
             stat = classStats.first
         }
 
-        guard let stat else {
+        guard let stat = stat else {
             return nil
         }
 
@@ -346,7 +346,11 @@ final class ManacostCollectionExporter {
            exportType.lowercased() == "changes" {
             return nil
         }
-        return try? JSONDecoder().decode(ManacostCollectionExportDocument.self, from: data)
+        guard let document = try? JSONDecoder().decode(ManacostCollectionExportDocument.self, from: data),
+              !document.cards.isEmpty else {
+            return nil
+        }
+        return document
     }
 
     private func saveBaseline(_ document: ManacostCollectionExportDocument) throws {
@@ -431,8 +435,8 @@ final class ManacostCollectionExporter {
         previous: [ManacostCollectionCardRecord],
         current: [ManacostCollectionCardRecord]
     ) -> [ManacostCollectionCardDeltaRecord] {
-        let previousMap = Dictionary(uniqueKeysWithValues: previous.map { (cardKey($0), $0) })
-        let currentMap = Dictionary(uniqueKeysWithValues: current.map { (cardKey($0), $0) })
+        let previousMap = cardLookup(previous)
+        let currentMap = cardLookup(current)
         let keys = Set(previousMap.keys).union(currentMap.keys)
 
         return keys.compactMap { key in
@@ -504,8 +508,8 @@ final class ManacostCollectionExporter {
         previous: [ManacostClassStatRecord],
         current: [ManacostClassStatRecord]
     ) -> [ManacostClassStatDelta] {
-        let previousMap = Dictionary(uniqueKeysWithValues: previous.map { ($0.cardClass, $0) })
-        let currentMap = Dictionary(uniqueKeysWithValues: current.map { ($0.cardClass, $0) })
+        let previousMap = classStatLookup(previous)
+        let currentMap = classStatLookup(current)
         let keys = Set(previousMap.keys).union(currentMap.keys)
 
         return keys.compactMap { key in
@@ -542,11 +546,11 @@ final class ManacostCollectionExporter {
         previous: [ManacostFavoriteHeroRecord],
         current: [ManacostFavoriteHeroRecord]
     ) -> ManacostFavoriteHeroesDelta {
-        let old = Dictionary(uniqueKeysWithValues: previous.map { ("\($0.heroKey):\($0.dbfId):\($0.cardId)", $0) })
-        let new = Dictionary(uniqueKeysWithValues: current.map { ("\($0.heroKey):\($0.dbfId):\($0.cardId)", $0) })
-        let added = new.filter { !old.keys.contains($0.key) }.map(\.value)
+        let old = favoriteHeroLookup(previous)
+        let new = favoriteHeroLookup(current)
+        let added = new.filter { !old.keys.contains($0.key) }.map { $0.value }
             .sorted { $0.heroKey == $1.heroKey ? $0.dbfId < $1.dbfId : $0.heroKey < $1.heroKey }
-        let removed = old.filter { !new.keys.contains($0.key) }.map(\.value)
+        let removed = old.filter { !new.keys.contains($0.key) }.map { $0.value }
             .sorted { $0.heroKey == $1.heroKey ? $0.dbfId < $1.dbfId : $0.heroKey < $1.heroKey }
         return ManacostFavoriteHeroesDelta(added: added, removed: removed)
     }
@@ -590,6 +594,30 @@ final class ManacostCollectionExporter {
             for record in group.records {
                 result["\(group.type):\(record.data)"] = (group.type, record.data, record)
             }
+        }
+        return result
+    }
+
+    private func cardLookup(_ cards: [ManacostCollectionCardRecord]) -> [String: ManacostCollectionCardRecord] {
+        var result = [String: ManacostCollectionCardRecord]()
+        for card in cards {
+            result[cardKey(card)] = card
+        }
+        return result
+    }
+
+    private func classStatLookup(_ stats: [ManacostClassStatRecord]) -> [String: ManacostClassStatRecord] {
+        var result = [String: ManacostClassStatRecord]()
+        for stat in stats where !stat.cardClass.isEmpty {
+            result[stat.cardClass] = stat
+        }
+        return result
+    }
+
+    private func favoriteHeroLookup(_ heroes: [ManacostFavoriteHeroRecord]) -> [String: ManacostFavoriteHeroRecord] {
+        var result = [String: ManacostFavoriteHeroRecord]()
+        for hero in heroes {
+            result["\(hero.heroKey):\(hero.dbfId):\(hero.cardId)"] = hero
         }
         return result
     }

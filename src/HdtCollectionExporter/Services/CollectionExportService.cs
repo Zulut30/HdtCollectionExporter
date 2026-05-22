@@ -320,7 +320,7 @@ namespace HdtCollectionExporter.Services
                     return null;
 
                 var document = parsed.ToObject<CollectionExportDocument>();
-                if(document == null || document.Cards == null)
+                if(document == null || document.Cards == null || document.Cards.Count == 0)
                     return null;
                 document.CardBacks = document.CardBacks ?? new List<int>();
                 document.FavoriteHeroes = document.FavoriteHeroes ?? new List<FavoriteHeroRecord>();

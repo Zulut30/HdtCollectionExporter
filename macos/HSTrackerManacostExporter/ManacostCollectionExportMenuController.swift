@@ -138,6 +138,8 @@ final class ManacostCollectionExportMenuController: NSObject, NSMenuDelegate {
     @objc private func setBaseline(_ sender: NSMenuItem) {
         do {
             let count = try exporter.setCurrentAsBaseline(options: settings.options())
+            settings.lastExportTime = Date()
+            updateState()
             showInfo("Baseline Saved", message: "Saved current collection baseline with \(count) cards.")
         } catch {
             showError(error)
@@ -207,7 +209,7 @@ final class ManacostCollectionExportMenuController: NSObject, NSMenuDelegate {
                     message: "No previous baseline was found. Current collection was saved as baseline; run changes export again after the collection changes."
                 )
             } else {
-                let names = result.files.map(\.lastPathComponent).joined(separator: "\n")
+                let names = result.files.map { $0.lastPathComponent }.joined(separator: "\n")
                 showInfo(
                     "Export Complete",
                     message: "Exported \(result.cardCount) cards. Changes: \(result.changeCount).\n\n\(names)"
