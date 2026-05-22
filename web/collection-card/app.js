@@ -998,6 +998,7 @@ function renderModalCardGallery() {
     const item = document.createElement("button");
     item.type = "button";
     item.className = `modal-card ${row.owned > 0 ? "is-owned" : "is-missing"}`;
+    item.style.setProperty("--card-index", Math.min(index, 28));
     item.title = row.owned > 0
       ? `${row.name}: ${copySummary(row)}`
       : `${row.name}: нет в коллекции`;

@@ -873,8 +873,10 @@ img {
   inset: 0;
   z-index: 50;
   display: none;
+  isolation: isolate;
   place-items: center;
   padding: 24px;
+  perspective: 1400px;
 }
 
 .modal-shell.is-open,
@@ -888,9 +890,12 @@ img {
   inset: 0;
   border: 0;
   background:
-    radial-gradient(circle at 50% 12%, rgba(225, 191, 105, 0.14), transparent 38rem),
-    rgba(3, 5, 5, 0.76);
+    linear-gradient(180deg, rgba(2, 4, 4, 0.5), rgba(2, 4, 4, 0.86)),
+    radial-gradient(ellipse at 50% 6%, rgba(225, 191, 105, 0.18), transparent 44rem),
+    rgba(3, 5, 5, 0.8);
+  backdrop-filter: blur(8px) saturate(0.85);
   cursor: pointer;
+  animation: scrim-in 180ms ease both;
 }
 
 .collection-modal {
@@ -904,10 +909,15 @@ img {
   border: 1px solid rgba(226, 210, 152, 0.28);
   border-radius: 10px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent 18%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.085), transparent 22%),
+    linear-gradient(180deg, rgba(7, 10, 9, 0.78), rgba(7, 10, 9, 0.94)),
+    url("assets/ui/body-content-bg.jpg") center / cover no-repeat,
     rgba(9, 13, 12, 0.96);
-  box-shadow: var(--deep-shadow);
-  animation: modal-in 220ms ease both;
+  box-shadow:
+    0 34px 90px rgba(0, 0, 0, 0.62),
+    0 0 0 1px rgba(255, 229, 151, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  animation: modal-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .collection-modal::before {
@@ -916,8 +926,18 @@ img {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 18% 0%, rgba(225, 191, 105, 0.12), transparent 30rem),
-    radial-gradient(circle at 85% 8%, rgba(58, 196, 135, 0.08), transparent 28rem);
+    linear-gradient(90deg, rgba(255, 229, 151, 0.09), transparent 26%, transparent 72%, rgba(58, 196, 135, 0.06)),
+    radial-gradient(ellipse at 50% 0%, rgba(225, 191, 105, 0.13), transparent 36rem);
+}
+
+.collection-modal::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 9px;
+  box-shadow: inset 0 0 42px rgba(0, 0, 0, 0.36);
 }
 
 .modal-header {
@@ -929,6 +949,10 @@ img {
   gap: 18px;
   padding: 22px 22px 18px;
   border-bottom: 1px solid rgba(244, 242, 232, 0.1);
+  background:
+    linear-gradient(180deg, rgba(7, 10, 9, 0.68), rgba(7, 10, 9, 0.28)),
+    linear-gradient(90deg, rgba(225, 191, 105, 0.08), transparent 58%);
+  backdrop-filter: blur(10px);
 }
 
 .modal-header h2 {
@@ -961,11 +985,12 @@ img {
   padding: 5px 9px;
   border: 1px solid rgba(244, 242, 232, 0.11);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.055);
+  background: rgba(7, 10, 9, 0.42);
   color: #d9d5c7;
   font-size: 12px;
   font-weight: 850;
   line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .legend-mark {
@@ -1016,8 +1041,12 @@ img {
   padding: 8px 10px;
   border: 1px solid rgba(244, 242, 232, 0.13);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.055);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent),
+    rgba(7, 10, 9, 0.5);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055);
 }
 
 .modal-stat small {
@@ -1051,7 +1080,10 @@ img {
   padding: 4px;
   border: 1px solid rgba(244, 242, 232, 0.13);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.055);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), transparent),
+    rgba(7, 10, 9, 0.48);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055);
 }
 
 .sort-control button {
@@ -1067,7 +1099,8 @@ img {
   transition:
     background 140ms ease,
     color 140ms ease,
-    transform 140ms ease;
+    transform 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .sort-control button:hover {
@@ -1078,7 +1111,9 @@ img {
 .sort-control button.is-active {
   color: #211507;
   background: linear-gradient(180deg, #ffe1a3, #d69a35);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .sort-control button:focus-visible {
@@ -1127,29 +1162,52 @@ img {
   z-index: 1;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(178px, 1fr));
-  gap: 34px 18px;
+  gap: 38px 18px;
   align-items: start;
   overflow: auto;
-  padding: 26px 22px 34px;
+  padding: 30px 22px 36px;
+  scrollbar-color: rgba(225, 191, 105, 0.34) rgba(255, 255, 255, 0.055);
+  scrollbar-width: thin;
+}
+
+.modal-card-gallery::-webkit-scrollbar {
+  width: 10px;
+}
+
+.modal-card-gallery::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.modal-card-gallery::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(7, 10, 9, 0.88);
+  border-radius: 999px;
+  background: rgba(225, 191, 105, 0.38);
 }
 
 .modal-card {
   position: relative;
   display: grid;
   grid-template-rows: auto auto;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
   place-items: center;
   border: 0;
   background: transparent;
   color: inherit;
   cursor: zoom-in;
-  animation: card-rise 260ms ease both;
+  transform-origin: 50% 42%;
+  animation: card-rise 340ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--card-index, 0) * 12ms);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
 }
 
 .modal-card img {
   width: min(100%, 220px);
-  filter: drop-shadow(0 20px 22px rgba(0, 0, 0, 0.44));
+  filter:
+    saturate(1.03)
+    drop-shadow(0 20px 22px rgba(0, 0, 0, 0.44));
   transition:
     filter 180ms ease,
     opacity 180ms ease,
@@ -1158,12 +1216,16 @@ img {
 
 .modal-card:hover img,
 .modal-card:focus-visible img {
-  transform: translateY(-5px) scale(1.025);
-  filter: drop-shadow(0 26px 28px rgba(0, 0, 0, 0.55));
+  transform: translateY(-8px) scale(1.035);
+  filter:
+    saturate(1.08)
+    drop-shadow(0 30px 30px rgba(0, 0, 0, 0.6))
+    drop-shadow(0 0 16px rgba(225, 191, 105, 0.12));
 }
 
 .modal-card:focus-visible {
-  outline: none;
+  outline: 2px solid rgba(225, 191, 105, 0.72);
+  outline-offset: 5px;
 }
 
 .modal-card.is-missing img {
@@ -1186,10 +1248,25 @@ img {
   padding: 4px 7px;
   border: 1px solid rgba(244, 242, 232, 0.1);
   border-radius: 999px;
-  background: rgba(7, 10, 9, 0.58);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.065), transparent),
+    rgba(7, 10, 9, 0.62);
   box-shadow:
     0 12px 20px rgba(0, 0, 0, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.modal-card:hover .card-indicator-row,
+.modal-card:focus-visible .card-indicator-row {
+  border-color: rgba(225, 191, 105, 0.24);
+  box-shadow:
+    0 14px 26px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
 }
 
 .copy-badges {
@@ -1228,6 +1305,15 @@ img {
   box-shadow:
     0 10px 24px rgba(0, 0, 0, 0.34),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.modal-card:hover .copy-badge,
+.modal-card:focus-visible .copy-badge {
+  border-color: rgba(244, 242, 232, 0.24);
+  transform: translateY(-1px);
 }
 
 .copy-badge-mark {
@@ -1272,13 +1358,28 @@ img {
   border: 1px solid rgba(226, 210, 152, 0.32);
   border-radius: 10px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), transparent 42%),
+    linear-gradient(180deg, rgba(7, 10, 9, 0.8), rgba(7, 10, 9, 0.95)),
+    url("assets/ui/body-content-bg.jpg") center / cover no-repeat,
     rgba(9, 13, 12, 0.98);
   box-shadow: var(--deep-shadow);
-  animation: modal-in 180ms ease both;
+  animation: lightbox-in 230ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.lightbox-card::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  pointer-events: none;
+  border-radius: 9px;
+  background:
+    linear-gradient(90deg, rgba(255, 229, 151, 0.09), transparent 48%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 42%);
 }
 
 .lightbox-card > img {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-height: 78vh;
   object-fit: contain;
@@ -1293,6 +1394,8 @@ img {
 }
 
 .lightbox-info {
+  position: relative;
+  z-index: 1;
   min-width: 0;
   padding-right: 18px;
 }
@@ -1481,7 +1584,7 @@ img {
 
   .modal-card-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px 8px;
+    gap: 28px 8px;
     padding: 20px 10px 28px;
   }
 
@@ -1540,7 +1643,18 @@ img {
 @keyframes modal-in {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.985);
+    transform: translateY(16px) rotateX(1.5deg) scale(0.982);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotateX(0) scale(1);
+  }
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
   }
   to {
     opacity: 1;
@@ -1548,14 +1662,23 @@ img {
   }
 }
 
-@keyframes card-rise {
+@keyframes scrim-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+  }
+}
+
+@keyframes lightbox-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
