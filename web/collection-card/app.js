@@ -33,6 +33,7 @@ const hearthstoneJsonLocalUrl = "assets/data/cards.ruRU.collectible.min.json";
 const hearthstoneJsonRemoteUrl = "https://api.hearthstonejson.com/v1/latest/ruRU/cards.collectible.json";
 
 let cardLookupPromise = null;
+let cardLookupWarmupScheduled = false;
 
 const defaultSettings = {
   countDuplicates: true,
@@ -205,6 +206,8 @@ const ownedCardMapCache = new WeakMap();
 let activeView = "scan";
 let scanState = null;
 let scanRendered = false;
+let profileReadRequestId = 0;
+let profileSaveRequestId = 0;
 
 const emptyProfile = {
   loaded: false,
@@ -263,6 +266,8 @@ elements.includeGolden.addEventListener("change", () => {
 });
 
 elements.resetButton.addEventListener("click", () => {
+  profileReadRequestId += 1;
+  profileSaveRequestId += 1;
   elements.fileInput.value = "";
   currentProfile = null;
   currentCollectionData = null;
@@ -347,6 +352,7 @@ function readFile(file) {
     return;
   }
 
+  const readRequestId = ++profileReadRequestId;
   const reader = new FileReader();
   reader.onload = async () => {
     try {
@@ -355,6 +361,10 @@ function readFile(file) {
       const userIdentifiers = extractRawUserIdentifiers(rawText);
       setStatus("Загружаю русские названия карт из HearthstoneJSON...");
       const cardLookup = await loadCardLookup();
+      if (readRequestId !== profileReadRequestId) {
+        return;
+      }
+
       currentCollectionData = data;
       currentFileName = file.name;
       currentUserIdentifiers = userIdentifiers;
@@ -363,20 +373,30 @@ function readFile(file) {
       currentProfile = profile;
       renderProfile(profile);
       saveScanState();
-      const saveStatus = await saveProfileRecord(data, profile, file.name, userIdentifiers);
       const lookupStatus = cardLookup.loaded
         ? " Русские названия HearthstoneJSON применены."
         : " Справочник HearthstoneJSON недоступен, использую названия из файла.";
       setStatus(`Загружено: ${profile.cardRowsLabel} из ${file.name}.${lookupStatus}`);
-      if (saveStatus) {
-        setStatus(`${elements.statusText.textContent}${saveStatus}`);
-      }
+      queueProfileSave(data, profile, file.name, userIdentifiers);
     } catch (error) {
-      setStatus(error.message, true);
+      if (readRequestId === profileReadRequestId) {
+        setStatus(error.message, true);
+      }
     }
   };
   reader.onerror = () => setStatus("Не удалось прочитать выбранный файл.", true);
   reader.readAsText(file);
+}
+
+function queueProfileSave(data, profile, fileName, userIdentifiers = {}) {
+  const saveRequestId = ++profileSaveRequestId;
+  saveProfileRecord(data, profile, fileName, userIdentifiers).then((saveStatus) => {
+    if (saveRequestId !== profileSaveRequestId || activeView !== "scan" || !saveStatus) {
+      return;
+    }
+
+    setStatus(`${elements.statusText.textContent}${saveStatus}`);
+  }).catch(() => null);
 }
 
 async function saveProfileRecord(data, profile, fileName, userIdentifiers = {}) {
@@ -545,11 +565,8 @@ async function refreshProfileFromSettings() {
     currentProfile = profile;
     renderProfile(profile);
     saveScanState();
-    const saveStatus = await saveProfileRecord(currentCollectionData, profile, currentFileName, currentUserIdentifiers);
     setStatus(`Пересчитано: ${profile.cardRowsLabel}.`);
-    if (saveStatus) {
-      setStatus(`${elements.statusText.textContent}${saveStatus}`);
-    }
+    queueProfileSave(currentCollectionData, profile, currentFileName, currentUserIdentifiers);
   } catch (error) {
     setStatus(error.message, true);
   }
@@ -557,9 +574,6 @@ async function refreshProfileFromSettings() {
 
 function initializeCurrentView() {
   const view = viewFromLocation();
-  if (view === "scan") {
-    ensureScanRendered();
-  }
   switchView(view, { replace: true });
 }
 
@@ -596,6 +610,7 @@ function switchView(view, options = {}) {
     loadLeaderboard();
   } else {
     restoreScanState();
+    scheduleCardLookupWarmup();
   }
 }
 
@@ -1226,6 +1241,25 @@ function loadCardLookup() {
     cardLookupPromise = fetchCardLookup();
   }
   return cardLookupPromise;
+}
+
+function scheduleCardLookupWarmup() {
+  if (cardLookupPromise || cardLookupWarmupScheduled || activeView !== "scan") {
+    return;
+  }
+  cardLookupWarmupScheduled = true;
+
+  const warmup = () => {
+    if (activeView === "scan") {
+      loadCardLookup().catch(() => null);
+    }
+  };
+
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(warmup, { timeout: 1800 });
+  } else {
+    window.setTimeout(warmup, 600);
+  }
 }
 
 async function fetchCardLookup() {
