@@ -1,0 +1,110 @@
+<Window x:Class="HdtCollectionExporter.UI.ExportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Collection Exporter"
+        MinWidth="560"
+        MinHeight="330"
+        Width="620"
+        Height="360"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResizeWithGrip">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <TextBlock x:Name="OutputFolderLabel"
+                   Grid.Row="0"
+                   Grid.Column="0"
+                   Margin="0,4,10,8"
+                   VerticalAlignment="Center"
+                   Text="Output folder" />
+        <TextBox x:Name="OutputFolderTextBox"
+                 Grid.Row="0"
+                 Grid.Column="1"
+                 Margin="0,0,8,8"
+                 MinWidth="280"
+                 VerticalAlignment="Center" />
+        <Button x:Name="BrowseButton"
+                Grid.Row="0"
+                Grid.Column="2"
+                Margin="0,0,0,8"
+                MinWidth="80"
+                Click="BrowseButton_OnClick"
+                Content="Browse..." />
+
+        <StackPanel Grid.Row="1"
+                    Grid.Column="1"
+                    Grid.ColumnSpan="2"
+                    Margin="0,0,0,12">
+            <CheckBox x:Name="IncludeCardNamesCheckBox"
+                      Margin="0,2"
+                      Content="include card names" />
+            <CheckBox x:Name="IncludeGoldenCountCheckBox"
+                      Margin="0,2"
+                      Content="include golden count" />
+            <CheckBox x:Name="IncludeMetadataCheckBox"
+                      Margin="0,2"
+                      Content="include metadata" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="2"
+                    Grid.Column="1"
+                    Grid.ColumnSpan="2"
+                    Margin="0,0,0,16"
+                    Orientation="Horizontal">
+            <Button x:Name="ExportJsonButton"
+                    MinWidth="100"
+                    Margin="0,0,8,0"
+                    Click="ExportJsonButton_OnClick"
+                    Content="Export JSON" />
+            <Button x:Name="ExportCsvButton"
+                    MinWidth="100"
+                    Margin="0,0,8,0"
+                    Click="ExportCsvButton_OnClick"
+                    Content="Export CSV" />
+            <Button x:Name="ExportBothButton"
+                    MinWidth="100"
+                    Click="ExportBothButton_OnClick"
+                    Content="Export Both" />
+        </StackPanel>
+
+        <Border Grid.Row="3"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Padding="12"
+                BorderBrush="#D0D0D0"
+                BorderThickness="1">
+            <StackPanel>
+                <TextBlock x:Name="StatusLabelTextBlock"
+                           FontWeight="SemiBold"
+                           Text="Status" />
+                <TextBlock x:Name="StatusTextBlock"
+                           Margin="0,6,0,0"
+                           TextWrapping="Wrap" />
+                <TextBlock x:Name="LastExportTextBlock"
+                           Margin="0,8,0,0"
+                           Foreground="#666666"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+
+        <TextBlock x:Name="PrivacyNoteTextBlock"
+                   Grid.Row="4"
+                   Grid.Column="0"
+                   Grid.ColumnSpan="3"
+                   Margin="0,12,0,0"
+                   Foreground="#666666"
+                   TextWrapping="Wrap"
+                   Text="The export is local only. No collection data is sent to external services." />
+    </Grid>
+</Window>

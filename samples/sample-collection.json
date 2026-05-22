@@ -1,0 +1,59 @@
+{
+  "exportedAt": "2026-05-22T12:00:00.0000000+02:00",
+  "source": "Hearthstone Deck Tracker plugin",
+  "version": 2,
+  "user": {
+    "battleTag": "Example#1234",
+    "accountHi": 123456789,
+    "accountLo": 987654321
+  },
+  "dust": 1200,
+  "cardBacks": [
+    0,
+    1,
+    2
+  ],
+  "favoriteCardBack": 1,
+  "favoriteHeroes": [
+    {
+      "heroKey": 2,
+      "dbfId": 274,
+      "cardId": "HERO_06",
+      "name": "Malfurion Stormrage",
+      "class": "DRUID"
+    }
+  ],
+  "playerRecords": [
+    {
+      "type": 1,
+      "records": [
+        {
+          "data": 2,
+          "wins": 10,
+          "losses": 4,
+          "ties": 0
+        }
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "cardId": "CORE_EX1_169",
+      "dbfId": 169,
+      "name": "Innervate",
+      "set": "CORE",
+      "rarity": "FREE",
+      "class": "DRUID",
+      "normal": 2,
+      "golden": 0,
+      "diamond": 0,
+      "signature": 0,
+      "premiumTotal": 0,
+      "trialNormal": 0,
+      "trialGolden": 0,
+      "trialDiamond": 0,
+      "trialSignature": 0,
+      "ownedTotal": 2
+    }
+  ]
+}
