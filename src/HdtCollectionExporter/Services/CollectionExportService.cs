@@ -12,7 +12,7 @@ namespace HdtCollectionExporter.Services
 {
     public class CollectionExportService
     {
-        private const string ExportSource = "Hearthstone Deck Tracker plugin";
+        private const string ExportSource = "Hearthstone Deck Tracker plugin by Manacost";
         private const int ExportVersion = 2;
         private readonly ICollectionProvider _collectionProvider;
 

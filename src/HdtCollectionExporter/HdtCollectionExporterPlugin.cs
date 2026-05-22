@@ -18,12 +18,12 @@ namespace HdtCollectionExporter
 
         public string Name
         {
-            get { return "Collection Exporter"; }
+            get { return "Collection Exporter by Manacost"; }
         }
 
         public string Description
         {
-            get { return "Exports your Hearthstone collection from HDT to local JSON and CSV files."; }
+            get { return "Exports your Hearthstone collection from HDT to local JSON and CSV files. Built by the Manacost team."; }
         }
 
         public string ButtonText
@@ -33,12 +33,12 @@ namespace HdtCollectionExporter
 
         public string Author
         {
-            get { return "Local plugin"; }
+            get { return "Manacost"; }
         }
 
         public Version Version
         {
-            get { return new Version(1, 1, 0); }
+            get { return new Version(1, 1, 1); }
         }
 
         public MenuItem MenuItem
@@ -111,12 +111,12 @@ namespace HdtCollectionExporter
 
         public string Name
         {
-            get { return "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438"; }
+            get { return "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438 \u043e\u0442 Manacost"; }
         }
 
         public string Description
         {
-            get { return "\u042d\u043a\u0441\u043f\u043e\u0440\u0442\u0438\u0440\u0443\u0435\u0442 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u044e Hearthstone \u0438\u0437 HDT \u0432 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0435 JSON \u0438 CSV \u0444\u0430\u0439\u043b\u044b."; }
+            get { return "\u042d\u043a\u0441\u043f\u043e\u0440\u0442\u0438\u0440\u0443\u0435\u0442 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u044e Hearthstone \u0438\u0437 HDT \u0432 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0435 JSON \u0438 CSV \u0444\u0430\u0439\u043b\u044b. \u041f\u043b\u0430\u0433\u0438\u043d \u043e\u0442 \u043a\u043e\u043c\u0430\u043d\u0434\u044b Manacost."; }
         }
 
         public string ButtonText
@@ -126,12 +126,12 @@ namespace HdtCollectionExporter
 
         public string Author
         {
-            get { return "Local plugin"; }
+            get { return "Manacost"; }
         }
 
         public Version Version
         {
-            get { return new Version(1, 1, 0); }
+            get { return new Version(1, 1, 1); }
         }
 
         public MenuItem MenuItem

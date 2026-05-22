@@ -1,6 +1,6 @@
 # Гайд по установке
 
-Этот гайд объясняет, как собрать и установить HDT Collection Exporter в Hearthstone Deck Tracker.
+Этот гайд объясняет, как собрать и установить HDT Collection Exporter by Manacost в Hearthstone Deck Tracker.
 
 ## 1. Требования
 
@@ -71,8 +71,8 @@ HDT загружает только `.dll` файлы плагинов.
 
 В `Настройки > Трекер > Расширения` включи один из вариантов:
 
-- `Collection Exporter`
-- `Экспорт коллекции`
+- `Collection Exporter by Manacost`
+- `Экспорт коллекции от Manacost`
 
 Оба пункта используют один и тот же экспорт. Второй вариант имеет русские тексты интерфейса.
 
@@ -83,13 +83,13 @@ HDT загружает только `.dll` файлы плагинов.
 Затем открой:
 
 ```text
-Plugins > Collection Exporter
+Plugins > Collection Exporter by Manacost
 ```
 
 или:
 
 ```text
-Plugins > Экспорт коллекции
+Plugins > Экспорт коллекции от Manacost
 ```
 
 Выбери папку и нажми:

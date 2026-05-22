@@ -1,8 +1,8 @@
-# HDT Collection Exporter / Экспорт коллекции HDT
+# HDT Collection Exporter by Manacost / Экспорт коллекции HDT от Manacost
 
-HDT Collection Exporter is a Hearthstone Deck Tracker plugin that exports a user's Hearthstone collection and related local profile data to JSON and CSV.
+HDT Collection Exporter by Manacost is a Hearthstone Deck Tracker plugin that exports a user's Hearthstone collection and related local profile data to JSON and CSV.
 
-Экспорт коллекции HDT — это плагин для Hearthstone Deck Tracker, который экспортирует коллекцию Hearthstone пользователя и связанные локальные данные профиля в JSON и CSV.
+Экспорт коллекции HDT от Manacost — это плагин для Hearthstone Deck Tracker, который экспортирует коллекцию Hearthstone пользователя и связанные локальные данные профиля в JSON и CSV.
 
 The plugin is local-only: it does not send data to external services. The exported files are meant to be uploaded by the user manually to another website or tool.
 
@@ -12,19 +12,21 @@ The plugin is local-only: it does not send data to external services. The export
 
 The DLL exposes two HDT plugin entries:
 
-- `Collection Exporter` — English UI.
-- `Экспорт коллекции` — Russian UI.
+- `Collection Exporter by Manacost` — English UI.
+- `Экспорт коллекции от Manacost` — Russian UI.
 
-Оба расширения используют один и тот же код экспорта. Отличаются только название, описание, меню, окно и статусы.
+Both entries use the same export logic and are built by the Manacost team. They differ only by name, description, menu text, window text, and status messages.
+
+Оба расширения используют один и тот же код экспорта и сделаны командой Manacost. Отличаются только название, описание, меню, окно и статусы.
 
 ## Exported Data / Какие данные экспортируются
 
 JSON export schema version: `2`.
 
-JSON экспортирует:
+JSON export includes:
 
 - `exportedAt` — export timestamp in ISO format.
-- `source` — `Hearthstone Deck Tracker plugin`.
+- `source` — `Hearthstone Deck Tracker plugin by Manacost`.
 - `version` — export schema version.
 - `user.battleTag` — user's BattleTag, if HDT can read it.
 - `user.accountHi` / `user.accountLo` — Hearthstone account identifiers exposed by HDT.
@@ -35,6 +37,20 @@ JSON экспортирует:
 - `playerRecords` — raw player records from Hearthstone/HDT, grouped by numeric `type` and `data`, with `wins`, `losses`, and `ties`.
 - `cards` — owned cards with ids, metadata, normal/premium counts, trial counts, and totals.
 
+JSON содержит:
+
+- `exportedAt` — время экспорта в ISO-формате.
+- `source` — `Hearthstone Deck Tracker plugin by Manacost`.
+- `version` — версия схемы экспорта.
+- `user.battleTag` — BattleTag пользователя, если HDT может его прочитать.
+- `user.accountHi` / `user.accountLo` — идентификаторы Hearthstone-аккаунта, доступные через HDT.
+- `dust` — текущее количество пыли.
+- `cardBacks` — id доступных рубашек карт.
+- `favoriteCardBack` — id выбранной любимой рубашки.
+- `favoriteHeroes` — выбранные любимые портреты героев / скины.
+- `playerRecords` — сырые записи статистики игрока из Hearthstone/HDT, сгруппированные по numeric `type` и `data`, с `wins`, `losses`, `ties`.
+- `cards` — карты в коллекции с id, метаданными, обычными/премиум количествами, trial-количествами и итогами.
+
 CSV export keeps a stable table shape:
 
 ```text
@@ -42,6 +58,8 @@ cardId,dbfId,name,set,rarity,class,normal,golden,ownedTotal
 ```
 
 In CSV, `golden` is a premium total: `golden + diamond + signature`. The full premium split is available in JSON as `golden`, `diamond`, `signature`, and `premiumTotal`.
+
+В CSV колонка `golden` означает общий premium count: золотые + diamond + signature. Полная разбивка доступна в JSON в полях `golden`, `diamond`, `signature`, `premiumTotal`.
 
 ## Privacy / Приватность
 
@@ -106,7 +124,7 @@ HdtCollectionExporter.dll
 
 Do not copy `.sln`, `.csproj`, source files, `bin`, or `obj`.
 
-Подробная инструкция есть здесь:
+Подробные инструкции:
 
 - [English install guide](docs/INSTALL.en.md)
 - [Русский гайд по установке](docs/INSTALL.ru.md)
@@ -115,7 +133,7 @@ Do not copy `.sln`, `.csproj`, source files, `bin`, or `obj`.
 
 1. Start Hearthstone and log in.
 2. Start or restart HDT.
-3. Enable either `Collection Exporter` or `Экспорт коллекции` in HDT plugin settings.
+3. Enable either `Collection Exporter by Manacost` or `Экспорт коллекции от Manacost` in HDT plugin settings.
 4. Open the plugin from HDT's `Plugins` menu.
 5. Choose an output folder.
 6. Click `Export JSON`, `Export CSV`, or `Export Both`.

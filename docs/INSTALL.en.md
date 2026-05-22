@@ -1,6 +1,6 @@
 # Installation Guide
 
-This guide explains how to build and install HDT Collection Exporter into Hearthstone Deck Tracker.
+This guide explains how to build and install HDT Collection Exporter by Manacost into Hearthstone Deck Tracker.
 
 ## 1. Requirements
 
@@ -71,8 +71,8 @@ If HDT was already running while you copied the DLL, restart is important becaus
 
 In `Options > Tracker > Plugins`, enable either:
 
-- `Collection Exporter`
-- `Экспорт коллекции`
+- `Collection Exporter by Manacost`
+- `Экспорт коллекции от Manacost`
 
 Both entries use the same export logic. The second one has Russian UI text.
 
@@ -83,13 +83,13 @@ Start Hearthstone, log in, and wait for HDT to read the collection.
 Then open:
 
 ```text
-Plugins > Collection Exporter
+Plugins > Collection Exporter by Manacost
 ```
 
 or:
 
 ```text
-Plugins > Экспорт коллекции
+Plugins > Экспорт коллекции от Manacost
 ```
 
 Choose an output folder and click:

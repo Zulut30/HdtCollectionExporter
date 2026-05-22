@@ -148,8 +148,11 @@ namespace HdtCollectionExporter.UI
         private void ApplyText()
         {
             Title = _text.WindowTitle;
+            HeaderTitleTextBlock.Text = _text.HeaderTitle;
+            BrandTextBlock.Text = _text.BrandLine;
             OutputFolderLabel.Text = _text.OutputFolder;
             BrowseButton.Content = _text.Browse;
+            OptionsTitleTextBlock.Text = _text.OptionsTitle;
             IncludeCardNamesCheckBox.Content = _text.IncludeCardNames;
             IncludeGoldenCountCheckBox.Content = _text.IncludeGoldenCount;
             IncludeMetadataCheckBox.Content = _text.IncludeMetadata;
