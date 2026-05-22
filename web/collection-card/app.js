@@ -40,6 +40,14 @@ const defaultSettings = {
 };
 
 const localProfileSaveHosts = new Set(["", "localhost", "127.0.0.1", "::1"]);
+const viewRoutes = {
+  scan: "/",
+  leaderboard: "/leaderboard",
+};
+const viewTitles = {
+  scan: "Карточка коллекции Manacost",
+  leaderboard: "Таблица лидеров коллекций Manacost",
+};
 
 const setTranslations = {
   CORE: "Основной набор",
@@ -112,6 +120,7 @@ const cardSetAliases = {
 };
 
 const elements = {
+  brandLink: document.querySelector(".brand"),
   scanTabButton: document.querySelector("#scanTabButton"),
   leaderboardTabButton: document.querySelector("#leaderboardTabButton"),
   scanView: document.querySelector("#scanView"),
@@ -189,8 +198,13 @@ let currentModalSort = "owned";
 let leaderboardProfiles = [];
 let selectedLeaderboardId = "";
 let leaderboardLoaded = false;
+let leaderboardRequestId = 0;
+let currentLeaderboardHasCollection = false;
+const leaderboardProfileCache = new Map();
+const ownedCardMapCache = new WeakMap();
 let activeView = "scan";
 let scanState = null;
+let scanRendered = false;
 
 const emptyProfile = {
   loaded: false,
@@ -221,11 +235,14 @@ const emptyProfile = {
   selectedSetCards: [],
 };
 
-renderProfile(emptyProfile);
-
+elements.brandLink.addEventListener("click", (event) => {
+  event.preventDefault();
+  switchView("scan");
+});
 elements.scanTabButton.addEventListener("click", () => switchView("scan"));
 elements.leaderboardTabButton.addEventListener("click", () => switchView("leaderboard"));
 elements.refreshLeaderboardButton.addEventListener("click", () => loadLeaderboard({ force: true }));
+window.addEventListener("popstate", () => switchView(viewFromLocation(), { updateUrl: false }));
 
 elements.chooseFileButton.addEventListener("click", () => elements.fileInput.click());
 elements.fileInput.addEventListener("change", () => {
@@ -322,6 +339,8 @@ elements.dropZone.addEventListener("keydown", (event) => {
   }
 });
 
+initializeCurrentView();
+
 function readFile(file) {
   if (!file.name.toLowerCase().endsWith(".json")) {
     setStatus("Выбери JSON-файл экспорта.", true);
@@ -378,6 +397,10 @@ async function saveProfileRecord(data, profile, fileName, userIdentifiers = {}) 
       body: JSON.stringify(buildStoredProfile(data, profile, fileName, blizzardId, userIdentifiers)),
     });
     const result = await response.json().catch(() => ({}));
+
+    if (result.skipped) {
+      return " Демо-профиль не сохраняется в лидерборд.";
+    }
 
     if (!response.ok || !result.ok) {
       return " \u0421\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u0438\u0435 \u043f\u043e Blizzard ID \u0441\u0435\u0439\u0447\u0430\u0441 \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e.";
@@ -532,9 +555,23 @@ async function refreshProfileFromSettings() {
   }
 }
 
-function switchView(view) {
+function initializeCurrentView() {
+  const view = viewFromLocation();
+  if (view === "scan") {
+    ensureScanRendered();
+  }
+  switchView(view, { replace: true });
+}
+
+function viewFromLocation() {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  return path.toLowerCase() === viewRoutes.leaderboard ? "leaderboard" : "scan";
+}
+
+function switchView(view, options = {}) {
+  view = view === "leaderboard" ? "leaderboard" : "scan";
   const isLeaderboard = view === "leaderboard";
-  if (activeView === "scan" && isLeaderboard) {
+  if (activeView === "scan" && isLeaderboard && scanRendered) {
     saveScanState();
   }
 
@@ -544,14 +581,53 @@ function switchView(view) {
   elements.leaderboardTabButton.classList.toggle("is-active", isLeaderboard);
   elements.scanTabButton.setAttribute("aria-pressed", isLeaderboard ? "false" : "true");
   elements.leaderboardTabButton.setAttribute("aria-pressed", isLeaderboard ? "true" : "false");
+  setCurrentNav(elements.scanTabButton, !isLeaderboard);
+  setCurrentNav(elements.leaderboardTabButton, isLeaderboard);
   closeCardLightbox();
   closeCollectionModal();
   activeView = view;
+  document.title = viewTitles[view] || viewTitles.scan;
+
+  if (options.updateUrl !== false) {
+    updateViewUrl(view, { replace: Boolean(options.replace) });
+  }
 
   if (isLeaderboard) {
     loadLeaderboard();
   } else {
     restoreScanState();
+  }
+}
+
+function setCurrentNav(element, isCurrent) {
+  if (isCurrent) {
+    element.setAttribute("aria-current", "page");
+  } else {
+    element.removeAttribute("aria-current");
+  }
+}
+
+function updateViewUrl(view, options = {}) {
+  if (!window.history || typeof window.history.pushState !== "function") {
+    return;
+  }
+
+  const nextUrl = new URL(window.location.href);
+  nextUrl.pathname = viewRoutes[view] || viewRoutes.scan;
+  nextUrl.search = "";
+  nextUrl.hash = "";
+
+  if (nextUrl.href === window.location.href && !options.replace) {
+    return;
+  }
+
+  const method = options.replace ? "replaceState" : "pushState";
+  window.history[method]({ view }, "", nextUrl);
+}
+
+function ensureScanRendered() {
+  if (!scanRendered) {
+    renderProfile(currentProfile || emptyProfile);
   }
 }
 
@@ -600,11 +676,15 @@ async function loadLeaderboard(options = {}) {
     return;
   }
 
+  if (options.force) {
+    leaderboardProfileCache.clear();
+  }
+
   elements.leaderboardStatus.textContent = "Загружаю профили...";
   elements.refreshLeaderboardButton.disabled = true;
 
   try {
-    const response = await fetch("/api/profile?leaderboard=1", { cache: "no-store" });
+    const response = await fetch("/api/profile?leaderboard=1", { cache: options.force ? "reload" : "force-cache" });
     const result = await response.json().catch(() => ({}));
 
     if (!response.ok || !result.ok) {
@@ -613,12 +693,13 @@ async function loadLeaderboard(options = {}) {
 
     leaderboardProfiles = Array.isArray(result.users) ? result.users : [];
     leaderboardLoaded = true;
+    seedLeaderboardProfileCache(leaderboardProfiles);
     renderLeaderboardRows();
     updateLeaderboardStatus();
 
     const hasSelected = leaderboardProfiles.some((profile) => profile.blizzardId === selectedLeaderboardId);
     if (leaderboardProfiles.length && (!selectedLeaderboardId || !hasSelected)) {
-      await selectLeaderboardProfile(leaderboardProfiles[0].blizzardId);
+      await selectLeaderboardProfile(leaderboardProfiles[0].blizzardId, { fetchDetails: false });
     }
   } catch (error) {
     leaderboardLoaded = false;
@@ -694,41 +775,106 @@ function renderLeaderboardRows() {
   elements.leaderboardRows.appendChild(fragment);
 }
 
-async function selectLeaderboardProfile(blizzardId) {
+async function selectLeaderboardProfile(blizzardId, options = {}) {
   if (!blizzardId) {
     return;
   }
 
+  const shouldFetchDetails = options.fetchDetails !== false;
+  const requestId = ++leaderboardRequestId;
   selectedLeaderboardId = blizzardId;
   renderLeaderboardRows();
+  const cached = leaderboardProfileCache.get(blizzardId);
+  const summaryRecord = cached?.record || leaderboardProfiles.find((record) => record.blizzardId === blizzardId);
+
+  if (summaryRecord) {
+    applyLeaderboardRecord(summaryRecord, { preserveSelectedSet: Boolean(options.preserveSelectedSet) });
+  }
+
+  if (!shouldFetchDetails || cached?.hasCollection) {
+    updateLeaderboardStatus();
+    return summaryRecord;
+  }
+
   elements.leaderboardStatus.textContent = "Открываю коллекцию...";
 
   try {
-    const response = await fetch(`/api/profile?blizzardId=${encodeURIComponent(blizzardId)}`, { cache: "no-store" });
-    const result = await response.json().catch(() => ({}));
+    const publicRecord = await fetchLeaderboardProfileRecord(blizzardId, { force: Boolean(options.force) });
 
-    if (!response.ok || !result.ok || !result.profile) {
-      throw new Error(result.error || "Не удалось открыть коллекцию игрока.");
+    if (requestId !== leaderboardRequestId) {
+      return publicRecord;
     }
 
-    const publicRecord = result.profile;
-    currentCardLookup = currentCardLookup || await loadCardLookup();
-    currentCollectionData = { cards: publicRecord.collection?.cards || [] };
-    currentFileName = publicRecord.user?.battleTag || "leaderboard-profile.json";
-    currentUserIdentifiers = {};
-    currentSettings = {
-      countDuplicates: publicRecord.settings?.countDuplicates !== false,
-      includeGolden: publicRecord.settings?.includeGolden !== false,
-    };
-
-    const profile = profileFromPublicRecord(publicRecord);
-    currentProfile = profile;
-    currentSelectedSetCode = "";
-    renderLeaderboardProfile(profile, publicRecord);
+    applyLeaderboardRecord(publicRecord, { preserveSelectedSet: Boolean(options.preserveSelectedSet) });
     updateLeaderboardStatus();
+    return publicRecord;
   } catch (error) {
-    elements.leaderboardStatus.textContent = error.message;
+    if (requestId === leaderboardRequestId) {
+      elements.leaderboardStatus.textContent = error.message;
+    }
+    return null;
   }
+}
+
+function seedLeaderboardProfileCache(records) {
+  records.forEach((record) => {
+    if (!record?.blizzardId) {
+      return;
+    }
+
+    const cached = leaderboardProfileCache.get(record.blizzardId);
+    if (!cached || !cached.hasCollection) {
+      leaderboardProfileCache.set(record.blizzardId, {
+        record,
+        hasCollection: hasCollectionPayload(record),
+      });
+    }
+  });
+}
+
+async function fetchLeaderboardProfileRecord(blizzardId, options = {}) {
+  const cached = leaderboardProfileCache.get(blizzardId);
+  if (cached?.hasCollection && !options.force) {
+    return cached.record;
+  }
+
+  const response = await fetch(`/api/profile?blizzardId=${encodeURIComponent(blizzardId)}`, {
+    cache: options.force ? "reload" : "force-cache",
+  });
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok || !result.ok || !result.profile) {
+    throw new Error(result.error || "Не удалось открыть коллекцию игрока.");
+  }
+
+  leaderboardProfileCache.set(blizzardId, {
+    record: result.profile,
+    hasCollection: hasCollectionPayload(result.profile),
+  });
+  return result.profile;
+}
+
+function applyLeaderboardRecord(publicRecord, options = {}) {
+  currentLeaderboardHasCollection = hasCollectionPayload(publicRecord);
+  currentCollectionData = { cards: publicRecord.collection?.cards || [] };
+  currentFileName = publicRecord.user?.battleTag || "leaderboard-profile.json";
+  currentUserIdentifiers = {};
+  currentSettings = {
+    countDuplicates: publicRecord.settings?.countDuplicates !== false,
+    includeGolden: publicRecord.settings?.includeGolden !== false,
+  };
+
+  const profile = profileFromPublicRecord(publicRecord);
+  currentProfile = profile;
+  if (!options.preserveSelectedSet) {
+    currentSelectedSetCode = "";
+  }
+  renderLeaderboardProfile(profile, publicRecord);
+  return profile;
+}
+
+function hasCollectionPayload(record) {
+  return Boolean(record?.collection && Array.isArray(record.collection.cards));
 }
 
 function updateLeaderboardStatus(message = "") {
@@ -750,7 +896,10 @@ function renderLeaderboardProfile(profile, record) {
   elements.leaderboardClassIcon.src = classIconPath(classMeta);
   elements.leaderboardProfileMeta.textContent = `Обновлено ${formatDate(record.savedAt)}`;
   elements.leaderboardProfileName.textContent = profile.playerName;
-  elements.leaderboardProfileSubtitle.textContent = `${classMeta.label} · ${formatNumber(record.collection?.cardCount || 0)} строк карт в сохранённом профиле`;
+  const savedRows = number(record.collection?.cardCount);
+  elements.leaderboardProfileSubtitle.textContent = savedRows > 0
+    ? `${classMeta.label} · ${formatNumber(savedRows)} строк карт в сохранённом профиле`
+    : `${classMeta.label} · ${formatNumber(profile.ownedCards)} карт в коллекции`;
   elements.leaderboardOwnedCards.textContent = formatNumber(profile.ownedCards);
   elements.leaderboardGoldenCards.textContent = formatNumber(profile.goldenCards);
   elements.leaderboardDust.textContent = formatNumber(profile.dust);
@@ -788,13 +937,31 @@ function renderLeaderboardSetBreakdown(profile) {
       </div>
     `;
     item.addEventListener("click", () => {
-      currentSelectedSetCode = row.code;
-      renderLeaderboardSetBreakdown(profile);
-      openCollectionModal(profile, row);
+      openLeaderboardSet(profile, row);
     });
     fragment.appendChild(item);
   });
   elements.leaderboardSetBreakdown.appendChild(fragment);
+}
+
+async function openLeaderboardSet(profile, row) {
+  currentSelectedSetCode = row.code;
+  renderLeaderboardSetBreakdown(profile);
+
+  try {
+    if (!currentLeaderboardHasCollection && selectedLeaderboardId) {
+      updateLeaderboardStatus("Загружаю карты игрока...");
+      const publicRecord = await fetchLeaderboardProfileRecord(selectedLeaderboardId);
+      profile = applyLeaderboardRecord(publicRecord, { preserveSelectedSet: true });
+      row = profile.setBreakdown.find((item) => item.code === currentSelectedSetCode) || row;
+    }
+
+    currentCardLookup = currentCardLookup || await loadCardLookup();
+    openCollectionModal(profile, row);
+    updateLeaderboardStatus();
+  } catch (error) {
+    elements.leaderboardStatus.textContent = error.message;
+  }
 }
 
 function profileFromPublicRecord(record) {
@@ -1072,7 +1239,7 @@ async function fetchCardLookup() {
     return { ...remoteLookup, loaded: true, source: "remote" };
   }
 
-  return { loaded: false, source: "none", byId: new Map(), byDbf: new Map(), all: [], count: 0 };
+  return { loaded: false, source: "none", byId: new Map(), byDbf: new Map(), bySet: new Map(), all: [], count: 0 };
 }
 
 async function fetchCardLookupSource(url) {
@@ -1088,6 +1255,7 @@ async function fetchCardLookupSource(url) {
 
   const byId = new Map();
   const byDbf = new Map();
+  const bySet = new Map();
   cards.forEach((card) => {
     const id = String(card.id || "").trim();
     const dbfId = number(card.dbfId);
@@ -1106,9 +1274,16 @@ async function fetchCardLookupSource(url) {
     if (dbfId > 0) {
       byDbf.set(dbfId, meta);
     }
+
+    const setCode = String(meta.set || "").trim().toUpperCase();
+    if (id && setCode) {
+      const setCards = bySet.get(setCode) || [];
+      setCards.push(meta);
+      bySet.set(setCode, setCards);
+    }
   });
 
-  return { byId, byDbf, all: Array.from(byId.values()), count: cards.length };
+  return { byId, byDbf, bySet, all: Array.from(byId.values()), count: cards.length };
 }
 
 function findCardMeta(card, cardLookup) {
@@ -1207,16 +1382,57 @@ function buildOwnedCardMap(cards, cardLookup, settings) {
   return byCardId;
 }
 
+function getOwnedCardMap(cards, cardLookup, settings) {
+  if (!Array.isArray(cards)) {
+    return new Map();
+  }
+
+  const cacheKey = [
+    settings.countDuplicates ? "d" : "u",
+    settings.includeGolden ? "g" : "n",
+    cardLookup?.loaded ? cardLookup.count : 0,
+  ].join(":");
+  let cache = ownedCardMapCache.get(cards);
+  if (!cache) {
+    cache = new Map();
+    ownedCardMapCache.set(cards, cache);
+  }
+
+  if (!cache.has(cacheKey)) {
+    cache.set(cacheKey, buildOwnedCardMap(cards, cardLookup, settings));
+  }
+
+  return cache.get(cacheKey);
+}
+
+function lookupCardsForSet(cardLookup, setCode) {
+  if (!cardLookup?.loaded || !cardLookup.bySet) {
+    return [];
+  }
+
+  const seen = new Set();
+  const rows = [];
+  setLookupCodes(setCode).forEach((code) => {
+    const setCards = cardLookup.bySet.get(code) || [];
+    setCards.forEach((meta) => {
+      if (!meta.id || seen.has(meta.id)) {
+        return;
+      }
+      seen.add(meta.id);
+      rows.push(meta);
+    });
+  });
+  return rows;
+}
+
 function buildSelectedSetCards(cards, cardLookup, settings, setCode) {
   if (!setCode) {
     return [];
   }
 
-  const ownedById = buildOwnedCardMap(cards, cardLookup, settings);
+  const ownedById = getOwnedCardMap(cards, cardLookup, settings);
   const lookupCodes = new Set(setLookupCodes(setCode));
-  const lookupCards = cardLookup && cardLookup.loaded && Array.isArray(cardLookup.all)
-    ? cardLookup.all.filter((meta) => lookupCodes.has(String(meta.set || "").trim().toUpperCase()))
-    : [];
+  const lookupCards = lookupCardsForSet(cardLookup, setCode);
 
   const sourceCards = lookupCards.length
     ? lookupCards
@@ -1292,6 +1508,7 @@ function pluralRu(value, one, few, many) {
 }
 
 function renderProfile(profile) {
+  scanRendered = true;
   const favoriteMeta = getClassMeta(profile.favoriteClass);
   const bestMeta = getClassMeta(profile.bestClass);
 

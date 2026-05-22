@@ -4,8 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Карточка коллекции Manacost</title>
+    <base href="/" />
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="styles.css?v=quality-10" />
+    <link rel="preload" href="assets/ui/wallpaper_info.jpg" as="image" fetchpriority="high" />
+    <link rel="stylesheet" href="styles.css?v=quality-12" />
   </head>
   <body>
     <main class="app-shell">
@@ -28,7 +30,7 @@
       </section>
 
       <header class="topbar">
-        <a class="brand" href="#" aria-label="Карточка коллекции Manacost">
+        <a class="brand" href="/" aria-label="Карточка коллекции Manacost">
           <img src="assets/ui/manacost_logo.jpg" alt="" width="46" height="46" decoding="async" />
           <span>Карточка коллекции Manacost</span>
         </a>
@@ -100,7 +102,7 @@
         <section class="result-stage">
           <article id="profileCard" class="profile-card is-empty" aria-live="polite">
             <div class="card-art">
-              <img id="heroArt" src="assets/class_art/mage.png" alt="" decoding="async" fetchpriority="high" />
+              <img id="heroArt" alt="" loading="lazy" decoding="async" />
               <div class="card-art-fade"></div>
             </div>
 
@@ -335,6 +337,6 @@
         document.head.appendChild(analyticsScript);
       }
     </script>
-    <script src="app.js?v=quality-10"></script>
+    <script src="app.js?v=quality-12"></script>
   </body>
 </html>

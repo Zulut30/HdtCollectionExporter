@@ -811,6 +811,8 @@ img {
 }
 
 .details-panel {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 360px;
   display: grid;
   gap: 22px;
   margin-top: 24px;
@@ -853,6 +855,7 @@ img {
 }
 
 .expansion-item {
+  contain: layout paint;
   display: grid;
   gap: 10px;
   min-width: 0;
@@ -1555,6 +1558,8 @@ img {
 }
 
 .modal-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 318px 220px;
   position: relative;
   display: grid;
   grid-template-rows: auto auto;
