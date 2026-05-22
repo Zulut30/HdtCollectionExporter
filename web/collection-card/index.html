@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Карточка коллекции Manacost</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="styles.css?v=scroll-fix-2" />
+    <link rel="stylesheet" href="styles.css?v=gallery-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -14,12 +14,17 @@
           <img src="assets/ui/boosty.png" alt="" width="40" height="40" loading="eager" decoding="async" />
           <span>Проект поддерживается благодаря подписчикам на Boosty</span>
         </a>
-        <a class="support-link" href="https://github.com/Zulut30/HdtCollectionExporter" target="_blank" rel="noopener noreferrer">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.9c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1 1.6 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .9-.3 2.8 1a9.7 9.7 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.8-2.3 4.6-4.6 4.9.4.3.7 1 .7 2v2.6c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" />
-          </svg>
-          Установить плагин HDT
-        </a>
+        <div class="support-actions">
+          <a class="support-link support-boosty" href="https://boosty.to/kolodahearthstone" target="_blank" rel="noopener noreferrer">
+            Поддержать
+          </a>
+          <a class="support-link" href="https://github.com/Zulut30/HdtCollectionExporter" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.9c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1 1.6 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .9-.3 2.8 1a9.7 9.7 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.8-2.3 4.6-4.6 4.9.4.3.7 1 .7 2v2.6c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" />
+            </svg>
+            Установить плагин HDT
+          </a>
+        </div>
       </section>
 
       <header class="topbar">
@@ -163,14 +168,6 @@
           </article>
 
           <div class="action-bar">
-            <button id="exportButton" class="button primary" type="button" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 3v12" />
-                <path d="m7 10 5 5 5-5" />
-                <path d="M5 21h14" />
-              </svg>
-              Скачать PNG
-            </button>
             <button id="resetButton" class="button secondary" type="button">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M4 7h10a6 6 0 1 1-5.2 9" />
@@ -180,18 +177,26 @@
               Сбросить
             </button>
           </div>
-
-          <section class="details-panel" aria-live="polite">
-            <div class="details-heading">
-              <span class="label">Карты по дополнениям</span>
-              <strong id="setsSummary">Загрузи JSON-экспорт</strong>
-            </div>
-            <div id="setBreakdown" class="expansion-list"></div>
-          </section>
         </section>
+      </section>
+
+      <section class="details-panel" aria-live="polite">
+        <div class="details-heading">
+          <span class="label">Карты по дополнениям</span>
+          <strong id="setsSummary">Загрузи JSON-экспорт</strong>
+        </div>
+        <div id="setBreakdown" class="expansion-list" aria-label="Выбор дополнения"></div>
+        <div class="gallery-heading">
+          <div>
+            <span class="label">Галерея коллекции</span>
+            <h2 id="cardGalleryTitle">Выбери дополнение</h2>
+          </div>
+          <strong id="cardGalleryStats">Загрузи JSON-экспорт</strong>
+        </div>
+        <div id="cardGallery" class="card-gallery"></div>
       </section>
     </main>
 
-    <script src="app.js?v=scroll-fix-2"></script>
+    <script src="app.js?v=gallery-1"></script>
   </body>
 </html>

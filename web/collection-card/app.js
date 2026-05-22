@@ -97,11 +97,22 @@ const setTranslations = {
   CATACLYSM: "Катаклизм",
 };
 
+const cardSetAliases = {
+  FP1: ["NAXX"],
+  PE1: ["GVG"],
+  FP2: ["BRM"],
+  BLACKROCK_MOUNTAIN: ["BRM"],
+  TEMP1: ["TGT"],
+  OLD_GODS: ["OG"],
+  GADGETZAN: ["GANGS"],
+  BLACK_TEMPLE: ["DEMON_HUNTER_INITIATE"],
+  DEMON_HUNTER_INITIATE: ["BLACK_TEMPLE"],
+};
+
 const elements = {
   dropZone: document.querySelector("#dropZone"),
   fileInput: document.querySelector("#fileInput"),
   chooseFileButton: document.querySelector("#chooseFileButton"),
-  exportButton: document.querySelector("#exportButton"),
   resetButton: document.querySelector("#resetButton"),
   countDuplicates: document.querySelector("#countDuplicates"),
   includeGolden: document.querySelector("#includeGolden"),
@@ -127,6 +138,9 @@ const elements = {
   expensiveCards: document.querySelector("#expensiveCards"),
   setsSummary: document.querySelector("#setsSummary"),
   setBreakdown: document.querySelector("#setBreakdown"),
+  cardGalleryTitle: document.querySelector("#cardGalleryTitle"),
+  cardGalleryStats: document.querySelector("#cardGalleryStats"),
+  cardGallery: document.querySelector("#cardGallery"),
 };
 
 let currentProfile = null;
@@ -134,6 +148,7 @@ let currentCollectionData = null;
 let currentFileName = "";
 let currentCardLookup = null;
 let currentSettings = { ...defaultSettings };
+let currentSelectedSetCode = "";
 
 const emptyProfile = {
   loaded: false,
@@ -164,6 +179,7 @@ const emptyProfile = {
   ],
   setBreakdown: [],
   setBreakdownSummary: "Загрузи JSON-экспорт",
+  selectedSetCards: [],
 };
 
 renderProfile(emptyProfile);
@@ -192,17 +208,9 @@ elements.resetButton.addEventListener("click", () => {
   currentCollectionData = null;
   currentFileName = "";
   currentCardLookup = null;
+  currentSelectedSetCode = "";
   renderProfile(emptyProfile);
   setStatus("Готов к полному JSON-экспорту коллекции.");
-});
-
-elements.exportButton.addEventListener("click", () => {
-  if (!currentProfile) {
-    return;
-  }
-  exportProfilePng().catch((error) => {
-    setStatus(`Не удалось скачать PNG: ${error.message}`, true);
-  });
 });
 
 ["dragenter", "dragover"].forEach((eventName) => {
@@ -518,7 +526,7 @@ async function fetchCardLookup() {
     return { ...remoteLookup, loaded: true, source: "remote" };
   }
 
-  return { loaded: false, source: "none", byId: new Map(), byDbf: new Map(), count: 0 };
+  return { loaded: false, source: "none", byId: new Map(), byDbf: new Map(), all: [], count: 0 };
 }
 
 async function fetchCardLookupSource(url) {
@@ -554,7 +562,7 @@ async function fetchCardLookupSource(url) {
     }
   });
 
-  return { byId, byDbf, count: cards.length };
+  return { byId, byDbf, all: Array.from(byId.values()), count: cards.length };
 }
 
 function buildExpensiveGoldenCards(cards, cardLookup, settings) {
@@ -679,6 +687,86 @@ function goldenCraftCost(rarity, meta, setCode = "") {
   return costs[rarity] || 0;
 }
 
+function setLookupCodes(setCode) {
+  const normalized = String(setCode || "").trim().toUpperCase();
+  return Array.from(new Set([normalized, ...(cardSetAliases[normalized] || [])]));
+}
+
+function buildOwnedCardMap(cards, cardLookup, settings) {
+  const byCardId = new Map();
+  cards.forEach((card) => {
+    if (isHiddenProfileSet(card.set)) {
+      return;
+    }
+
+    const meta = findCardMeta(card, cardLookup);
+    const cardId = String(card.cardId || card.id || (meta && meta.id) || "").trim();
+    if (!cardId) {
+      return;
+    }
+
+    const current = byCardId.get(cardId) || { owned: 0, golden: 0 };
+    current.owned += selectedOwnedCount(card, settings);
+    current.golden += selectedGoldenCount(card, settings);
+    byCardId.set(cardId, current);
+  });
+  return byCardId;
+}
+
+function buildSelectedSetCards(cards, cardLookup, settings, setCode) {
+  if (!setCode) {
+    return [];
+  }
+
+  const ownedById = buildOwnedCardMap(cards, cardLookup, settings);
+  const lookupCodes = new Set(setLookupCodes(setCode));
+  const lookupCards = cardLookup && cardLookup.loaded && Array.isArray(cardLookup.all)
+    ? cardLookup.all.filter((meta) => lookupCodes.has(String(meta.set || "").trim().toUpperCase()))
+    : [];
+
+  const sourceCards = lookupCards.length
+    ? lookupCards
+    : cards
+      .map((card) => findCardMeta(card, cardLookup) || {
+        id: String(card.cardId || card.id || "").trim(),
+        dbfId: number(card.dbfId),
+        name: cardDisplayName(card, null),
+        rarity: normalizeRarity(card.rarity),
+        set: String(card.set || "").trim(),
+      })
+      .filter((meta) => meta.id && lookupCodes.has(String(meta.set || "").trim().toUpperCase()));
+
+  return sourceCards
+    .map((meta) => {
+      const owned = ownedById.get(meta.id) || { owned: 0, golden: 0 };
+      return {
+        cardId: meta.id,
+        dbfId: number(meta.dbfId),
+        name: meta.name || meta.id,
+        rarity: normalizeRarity(meta.rarity),
+        owned: owned.owned,
+        golden: owned.golden,
+      };
+    })
+    .sort((a, b) => (
+      Number(a.owned <= 0) - Number(b.owned <= 0) ||
+      rarityWeight(b.rarity) - rarityWeight(a.rarity) ||
+      a.name.localeCompare(b.name, "ru") ||
+      a.dbfId - b.dbfId
+    ));
+}
+
+function rarityWeight(rarity) {
+  const weights = {
+    LEGENDARY: 5,
+    EPIC: 4,
+    RARE: 3,
+    COMMON: 2,
+    FREE: 1,
+  };
+  return weights[rarity] || 0;
+}
+
 function isZeroDustCard(rarity, meta, setCode = "") {
   const set = String(setCode || (meta && meta.set) || "").trim().toUpperCase();
   return rarity === "FREE" || zeroDustSetCodes.has(set);
@@ -738,12 +826,13 @@ function renderProfile(profile) {
   elements.coverage.textContent = profile.loaded ? `${Math.round(profile.coverageRatio * 100)}%` : "-";
   elements.coverageText.textContent = profile.coverageText;
   elements.coverageBar.style.width = `${Math.round(clamp(profile.coverageRatio, 0, 1) * 100)}%`;
-  elements.exportButton.disabled = !profile.loaded;
 
+  ensureSelectedSet(profile);
   renderTopClasses(profile.topClasses);
   renderTopSets(profile.topSets);
   renderExpensiveCards(profile.expensiveGoldenCards);
   renderSetBreakdown(profile);
+  renderCardGallery(profile);
 }
 
 function renderTopClasses(rows) {
@@ -831,8 +920,11 @@ function renderSetBreakdown(profile) {
 
   const fragment = document.createDocumentFragment();
   profile.setBreakdown.forEach((row) => {
-    const item = document.createElement("div");
+    const item = document.createElement("button");
+    item.type = "button";
     item.className = "expansion-item";
+    item.classList.toggle("is-selected", row.code === currentSelectedSetCode);
+    item.setAttribute("aria-pressed", row.code === currentSelectedSetCode ? "true" : "false");
     item.innerHTML = `
       <div>
         <strong>${escapeHtml(row.name)}</strong>
@@ -844,370 +936,83 @@ function renderSetBreakdown(profile) {
         <span>${formatNumber(row.dust)} пыли</span>
       </div>
     `;
+    item.addEventListener("click", () => {
+      currentSelectedSetCode = row.code;
+      renderSetBreakdown(profile);
+      renderCardGallery(profile);
+    });
     fragment.appendChild(item);
   });
   elements.setBreakdown.appendChild(fragment);
 }
 
-async function exportProfilePng() {
-  setStatus("Готовлю PNG...");
-  const pngUrl = await renderProfileCanvas(currentProfile);
-  const link = document.createElement("a");
-  link.href = pngUrl;
-  link.download = `${slugify(currentProfile.playerName)}-collection-card.png`;
-  link.click();
-  setStatus("PNG скачан.");
-}
+function renderCardGallery(profile) {
+  elements.cardGallery.replaceChildren();
 
-async function renderProfileCanvas(profile) {
-  const width = 1600;
-  const height = 1320;
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  const favoriteMeta = getClassMeta(profile.favoriteClass);
-  const bestMeta = getClassMeta(profile.bestClass);
-  const art = await loadImage(`assets/class_art/${favoriteMeta.slug}.png`);
-  const icon = await loadImage(classIconPath(favoriteMeta));
-  const logo = await loadImage("assets/ui/manacost_logo.jpg");
-  const gold = await loadImage("assets/ui/gold.webp");
-  const expensiveImages = await Promise.all(
-    profile.expensiveGoldenCards
-      .slice(0, 3)
-      .map((row) => loadOptionalImage(cardLocalImagePath(row.cardId))),
+  if (!profile.loaded) {
+    elements.cardGalleryTitle.textContent = "Выбери дополнение";
+    elements.cardGalleryStats.textContent = "Загрузи JSON-экспорт";
+    const empty = document.createElement("div");
+    empty.className = "gallery-empty";
+    empty.textContent = "После загрузки здесь появятся карты выбранного дополнения.";
+    elements.cardGallery.appendChild(empty);
+    return;
+  }
+
+  const selectedSet = profile.setBreakdown.find((row) => row.code === currentSelectedSetCode) || profile.setBreakdown[0];
+  if (!selectedSet) {
+    elements.cardGalleryTitle.textContent = "Нет дополнений";
+    elements.cardGalleryStats.textContent = "0 карт";
+    return;
+  }
+
+  const rows = buildSelectedSetCards(
+    currentCollectionData.cards || [],
+    currentCardLookup,
+    currentSettings,
+    selectedSet.code,
   );
+  const ownedCount = rows.filter((row) => row.owned > 0).length;
+  elements.cardGalleryTitle.textContent = selectedSet.name;
+  elements.cardGalleryStats.textContent = `${formatNumber(ownedCount)} из ${formatNumber(rows.length)} карт`;
 
-  drawBackground(ctx, width, height, favoriteMeta);
-  drawImageCover(ctx, art, 0, 0, width, 610);
-  drawHeroOverlay(ctx, width, height, favoriteMeta);
-
-  roundRect(ctx, 28, 28, width - 56, height - 56, 18);
-  ctx.strokeStyle = "rgba(225, 191, 105, 0.56)";
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  roundRect(ctx, 52, 52, width - 104, height - 104, 12);
-  ctx.strokeStyle = "rgba(225, 191, 105, 0.24)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  drawImageCover(ctx, logo, 92, 78, 86, 86);
-  drawText(ctx, "Карточка коллекции Manacost", 198, 110, {
-    size: 34,
-    weight: 850,
-    color: "#f4f2e8",
-  });
-  drawText(ctx, profile.sourceLabel, 198, 150, {
-    size: 23,
-    weight: 750,
-    color: "#aeb8ac",
-  });
-
-  drawCardPanel(ctx, 92, 520, width - 184, 720);
-  drawMedallion(ctx, icon, 134, 560, favoriteMeta);
-  drawLabel(ctx, "ПРОФИЛЬ ИГРОКА", 250, 586);
-  drawText(ctx, profile.playerName, 250, 654, {
-    size: fitText(ctx, profile.playerName, 720, 82, 44, 900),
-    weight: 900,
-    color: "#f4f2e8",
-  });
-
-  drawInfoPill(ctx, 1050, 570, 340, 86, "Любимый класс", favoriteMeta.label);
-  drawInfoPill(ctx, 1050, 674, 340, 86, "Лучший по победам", bestMeta.label);
-
-  const metrics = [
-    ["Карт в коллекции", formatNumber(profile.ownedCards)],
-    ["Золотые карты", formatNumber(profile.goldenCards)],
-    ["Пыль при распылении", formatNumber(profile.dust)],
-    ["Покрытие", `${Math.round(profile.coverageRatio * 100)}%`],
-  ];
-  metrics.forEach((metric, index) => {
-    const x = 134 + index * 330;
-    drawMetric(ctx, x, 760, 296, 126, metric[0], metric[1], index === 2 ? gold : null);
-  });
-
-  drawProgress(ctx, 134, 920, 1256, 34, profile.coverageRatio, favoriteMeta);
-  drawText(ctx, profile.coverageText, 134, 984, {
-    size: 28,
-    weight: 800,
-    color: "#f5e6b0",
-  });
-
-  drawText(ctx, "Топ классов", 134, 1038, {
-    size: 22,
-    weight: 850,
-    color: "#aeb8ac",
-  });
-  profile.topClasses.slice(0, 3).forEach((row, index) => {
-    const meta = getClassMeta(row.className);
-    drawText(ctx, `${meta.label} - ${row.caption}`, 310 + index * 350, 1038, {
-      size: 22,
-      weight: 800,
-      color: "#f4f2e8",
-    });
-  });
-
-  drawText(ctx, "Топ дополнений", 134, 1102, {
-    size: 22,
-    weight: 850,
-    color: "#aeb8ac",
-  });
-  profile.topSets.slice(0, 3).forEach((row, index) => {
-    const text = `${row.name} - ${formatNumber(row.owned)} карт`;
-    drawText(ctx, text, 370 + index * 390, 1102, {
-      size: fitText(ctx, text, 365, 22, 15, 800),
-      weight: 800,
-      color: "#f4f2e8",
-    });
-  });
-
-  drawText(ctx, "Дорогие золотые", 134, 1168, {
-    size: 22,
-    weight: 850,
-    color: "#aeb8ac",
-  });
-  profile.expensiveGoldenCards.slice(0, 3).forEach((row, index) => {
-    drawGoldenCardTile(ctx, row, expensiveImages[index], 390 + index * 365, 1118, 330, 104);
-  });
-
-  return await canvasToDataUrl(canvas);
-}
-
-function drawBackground(ctx, width, height, meta) {
-  const base = ctx.createLinearGradient(0, 0, width, height);
-  base.addColorStop(0, "#0b100f");
-  base.addColorStop(0.45, "#17231d");
-  base.addColorStop(1, "#0c1110");
-  ctx.fillStyle = base;
-  ctx.fillRect(0, 0, width, height);
-
-  const glow = ctx.createRadialGradient(width * 0.72, height * 0.16, 0, width * 0.72, height * 0.16, 680);
-  glow.addColorStop(0, hexToRgba(meta.accent, 0.42));
-  glow.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, width, height);
-}
-
-function drawHeroOverlay(ctx, width, height, meta) {
-  const vertical = ctx.createLinearGradient(0, 0, 0, height);
-  vertical.addColorStop(0, "rgba(8,12,11,0.05)");
-  vertical.addColorStop(0.45, "rgba(12,17,16,0.18)");
-  vertical.addColorStop(0.64, "rgba(17,24,21,0.96)");
-  vertical.addColorStop(1, "#101614");
-  ctx.fillStyle = vertical;
-  ctx.fillRect(0, 0, width, height);
-
-  const side = ctx.createLinearGradient(0, 0, width, 0);
-  side.addColorStop(0, "rgba(8,12,11,0.86)");
-  side.addColorStop(0.52, "rgba(8,12,11,0.08)");
-  side.addColorStop(1, hexToRgba(meta.accent, 0.22));
-  ctx.fillStyle = side;
-  ctx.fillRect(0, 0, width, height);
-}
-
-function drawCardPanel(ctx, x, y, width, height) {
-  roundRect(ctx, x, y, width, height, 18);
-  ctx.fillStyle = "rgba(8, 12, 11, 0.72)";
-  ctx.fill();
-  ctx.strokeStyle = "rgba(244, 242, 232, 0.14)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-}
-
-function drawMedallion(ctx, image, x, y, meta) {
-  roundRect(ctx, x, y, 92, 92, 16);
-  ctx.fillStyle = hexToRgba(meta.accent, 0.24);
-  ctx.fill();
-  ctx.strokeStyle = "rgba(225, 191, 105, 0.64)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.drawImage(image, x + 16, y + 16, 60, 60);
-}
-
-function drawInfoPill(ctx, x, y, width, height, label, value) {
-  roundRect(ctx, x, y, width, height, 14);
-  ctx.fillStyle = "rgba(255,255,255,0.07)";
-  ctx.fill();
-  ctx.strokeStyle = "rgba(244,242,232,0.12)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  drawLabel(ctx, label, x + 24, y + 30);
-  drawText(ctx, value, x + 24, y + 65, { size: 31, weight: 900, color: "#f5e6b0" });
-}
-
-function drawMetric(ctx, x, y, width, height, label, value, icon) {
-  roundRect(ctx, x, y, width, height, 14);
-  ctx.fillStyle = "rgba(255,255,255,0.065)";
-  ctx.fill();
-  ctx.strokeStyle = "rgba(244,242,232,0.12)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  drawText(ctx, label, x + 24, y + 38, { size: 22, weight: 750, color: "#aeb8ac" });
-  if (icon) {
-    ctx.drawImage(icon, x + 24, y + 62, 42, 42);
-    drawText(ctx, value, x + 78, y + 102, {
-      size: fitText(ctx, value, width - 104, 46, 30, 900),
-      weight: 900,
-      color: "#f4f2e8",
-    });
-  } else {
-    drawText(ctx, value, x + 24, y + 102, {
-      size: fitText(ctx, value, width - 48, 48, 30, 900),
-      weight: 900,
-      color: "#f4f2e8",
-    });
-  }
-}
-
-function drawGoldenCardTile(ctx, row, image, x, y, width, height) {
-  roundRect(ctx, x, y, width, height, 14);
-  const fill = ctx.createLinearGradient(x, y, x + width, y + height);
-  fill.addColorStop(0, "rgba(225,191,105,0.2)");
-  fill.addColorStop(0.48, "rgba(255,255,255,0.07)");
-  fill.addColorStop(1, "rgba(8,12,11,0.72)");
-  ctx.fillStyle = fill;
-  ctx.fill();
-  ctx.strokeStyle = "rgba(225,191,105,0.34)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  roundRect(ctx, x + 12, y + 10, 56, 84, 8);
-  ctx.fillStyle = "rgba(0,0,0,0.28)";
-  ctx.fill();
-  ctx.strokeStyle = "rgba(255,225,144,0.62)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  if (image) {
-    ctx.save();
-    roundRect(ctx, x + 12, y + 10, 56, 84, 8);
-    ctx.clip();
-    drawImageCover(ctx, image, x + 12, y + 10, 56, 84);
-    ctx.restore();
-  } else {
-    drawText(ctx, "★", x + 28, y + 64, { size: 34, weight: 900, color: "#e1bf69" });
+  if (!rows.length) {
+    const empty = document.createElement("div");
+    empty.className = "gallery-empty";
+    empty.textContent = "Не удалось найти карты этого дополнения в справочнике.";
+    elements.cardGallery.appendChild(empty);
+    return;
   }
 
-  const name = String(row.name || "Золотая карта");
-  drawText(ctx, name, x + 82, y + 36, {
-    size: fitText(ctx, name, width - 98, 18, 12, 900),
-    weight: 900,
-    color: "#f4f2e8",
+  const fragment = document.createDocumentFragment();
+  rows.forEach((row) => {
+    const item = document.createElement("figure");
+    item.className = `gallery-card ${row.owned > 0 ? "is-owned" : "is-missing"}`;
+    item.title = row.owned > 0
+      ? `${row.name}: есть ${formatNumber(row.owned)}`
+      : `${row.name}: нет в коллекции`;
+    const countLabel = row.owned > 0
+      ? `<span class="gallery-count">${formatNumber(row.owned)}</span>`
+      : `<span class="gallery-count">0</span>`;
+    item.innerHTML = `
+      <img src="${escapeHtml(cardRemoteImageUrl(row.cardId))}" alt="${escapeHtml(row.name)}" loading="lazy" decoding="async" />
+      ${countLabel}
+    `;
+    fragment.appendChild(item);
   });
-
-  const caption = `${formatNumber(row.golden || 0)} ${pluralRu(row.golden || 0, "золотая", "золотые", "золотых")} · ${formatNumber(row.totalValue || 0)} пыли`;
-  drawText(ctx, caption, x + 82, y + 68, {
-    size: fitText(ctx, caption, width - 98, 16, 11, 750),
-    weight: 750,
-    color: "#f5e6b0",
-  });
+  elements.cardGallery.appendChild(fragment);
 }
 
-function drawProgress(ctx, x, y, width, height, ratio, meta) {
-  roundRect(ctx, x, y, width, height, 999);
-  ctx.fillStyle = "rgba(255,255,255,0.09)";
-  ctx.fill();
-  ctx.strokeStyle = "rgba(225,191,105,0.24)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  const filled = Math.max(height, width * clamp(ratio, 0, 1));
-  roundRect(ctx, x, y, filled, height, 999);
-  const fill = ctx.createLinearGradient(x, y, x + width, y);
-  fill.addColorStop(0, meta.accent);
-  fill.addColorStop(1, "#e1bf69");
-  ctx.fillStyle = fill;
-  ctx.fill();
-}
-
-function drawImageCover(ctx, image, x, y, width, height) {
-  const scale = Math.max(width / image.width, height / image.height);
-  const drawWidth = image.width * scale;
-  const drawHeight = image.height * scale;
-  const drawX = x + (width - drawWidth) / 2;
-  const drawY = y + (height - drawHeight) / 2;
-  ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
-}
-
-function drawText(ctx, text, x, y, options) {
-  ctx.fillStyle = options.color;
-  ctx.font = `${options.weight || 700} ${options.size}px Inter, Segoe UI, Arial, sans-serif`;
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText(String(text), x, y);
-}
-
-function drawLabel(ctx, text, x, y) {
-  ctx.fillStyle = "#788579";
-  ctx.font = "850 18px Inter, Segoe UI, Arial, sans-serif";
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText(String(text).toUpperCase(), x, y);
-}
-
-function fitText(ctx, text, maxWidth, startSize, minSize, weight) {
-  for (let size = startSize; size >= minSize; size -= 2) {
-    ctx.font = `${weight || 900} ${size}px Inter, Segoe UI, Arial, sans-serif`;
-    if (ctx.measureText(String(text)).width <= maxWidth) {
-      return size;
-    }
+function ensureSelectedSet(profile) {
+  if (!profile.loaded || !profile.setBreakdown.length) {
+    currentSelectedSetCode = "";
+    return;
   }
-  return minSize;
-}
 
-function roundRect(ctx, x, y, width, height, radius) {
-  const r = Math.min(radius, width / 2, height / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + width - r, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
-  ctx.lineTo(x + width, y + height - r);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
-  ctx.lineTo(x + r, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
-function hexToRgba(hex, alpha) {
-  const normalized = hex.replace("#", "");
-  const value = parseInt(normalized, 16);
-  const red = (value >> 16) & 255;
-  const green = (value >> 8) & 255;
-  const blue = value & 255;
-  return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
-}
-
-function loadImage(url) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error(`Не удалось загрузить ${url}`));
-    image.src = url;
-  });
-}
-
-function loadOptionalImage(url) {
-  if (!url) {
-    return Promise.resolve(null);
+  const hasSelected = profile.setBreakdown.some((row) => row.code === currentSelectedSetCode);
+  if (!hasSelected) {
+    currentSelectedSetCode = profile.setBreakdown[0].code;
   }
-  return loadImage(url).catch(() => null);
-}
-
-function canvasToDataUrl(canvas) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = () => reject(new Error("Не удалось подготовить PNG."));
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        reject(new Error("Не удалось отрисовать карточку."));
-        return;
-      }
-      reader.readAsDataURL(blob);
-    }, "image/png");
-  });
 }
 
 function setStatus(message, isError = false) {
@@ -1328,12 +1133,4 @@ function escapeHtml(value) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
-}
-
-function slugify(value) {
-  const slug = String(value || "collection-card")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return slug || "collection-card";
 }
