@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Карточка коллекции Manacost</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="styles.css?v=quality-2" />
+    <link rel="stylesheet" href="styles.css?v=quality-3" />
   </head>
   <body>
     <main class="app-shell">
@@ -197,6 +197,12 @@
             <span class="label">Карты дополнения</span>
             <h2 id="modalSetTitle">Дополнение</h2>
             <p id="modalSetSubtitle">Обычные копии отмечены тёмным счётчиком, золотые — жёлтым.</p>
+            <div class="indicator-legend" aria-label="Обозначения индикаторов карт">
+              <span><i class="legend-mark is-mana">1</i> мана</span>
+              <span><i class="legend-mark is-normal">×</i> обычные копии</span>
+              <span><i class="legend-mark is-golden">★</i> золотые копии</span>
+              <span><i class="legend-mark is-missing">0</i> нет карты</span>
+            </div>
           </div>
           <div class="modal-actions">
             <div id="modalSetStats" class="modal-stat-grid" aria-label="Статистика карт дополнения"></div>
@@ -233,6 +239,6 @@
       </section>
     </div>
 
-    <script src="app.js?v=quality-2"></script>
+    <script src="app.js?v=quality-3"></script>
   </body>
 </html>

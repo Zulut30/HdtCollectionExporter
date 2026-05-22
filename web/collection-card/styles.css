@@ -1011,6 +1011,61 @@ img {
   line-height: 1.5;
 }
 
+.indicator-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 720px;
+  margin-top: 14px;
+}
+
+.indicator-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 5px 9px;
+  border: 1px solid rgba(244, 242, 232, 0.11);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.055);
+  color: #d9d5c7;
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.legend-mark {
+  display: inline-grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border-radius: 999px;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.legend-mark.is-mana {
+  background: linear-gradient(180deg, #78d7ff, #1a71cf);
+  color: #ffffff;
+}
+
+.legend-mark.is-normal {
+  background: rgba(7, 10, 9, 0.9);
+  color: #f0eee3;
+}
+
+.legend-mark.is-golden {
+  background: linear-gradient(180deg, #ffe0a0, #d6962f);
+  color: #241607;
+}
+
+.legend-mark.is-missing {
+  background: rgba(98, 108, 101, 0.26);
+  color: #98a198;
+}
+
 .modal-actions {
   display: inline-flex;
   align-items: center;
@@ -1152,6 +1207,8 @@ img {
 .modal-card {
   position: relative;
   display: grid;
+  grid-template-rows: auto auto;
+  gap: 8px;
   min-width: 0;
   place-items: center;
   border: 0;
@@ -1190,13 +1247,26 @@ img {
   opacity: 0.48;
 }
 
-.mana-chip {
-  position: absolute;
-  top: 5%;
-  left: 11%;
+.card-indicator-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 34px;
+  max-width: min(100%, 220px);
+  padding: 4px 7px;
+  border: 1px solid rgba(244, 242, 232, 0.1);
+  border-radius: 999px;
+  background: rgba(7, 10, 9, 0.58);
+  box-shadow:
+    0 12px 20px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.card-indicator {
   display: inline-grid;
-  width: 32px;
-  height: 32px;
+  min-width: 28px;
+  height: 28px;
   place-items: center;
   border: 1px solid rgba(138, 204, 255, 0.55);
   border-radius: 999px;
@@ -1204,13 +1274,12 @@ img {
     radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.9), transparent 23%),
     linear-gradient(180deg, #75d4ff, #1c6dca 64%, #12417d);
   color: #ffffff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 950;
   line-height: 1;
-  pointer-events: none;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
   box-shadow:
-    0 10px 20px rgba(0, 0, 0, 0.34),
+    0 8px 16px rgba(0, 0, 0, 0.24),
     inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
@@ -1222,6 +1291,12 @@ img {
   align-items: center;
   gap: 5px;
   pointer-events: none;
+}
+
+.copy-badges.is-inline {
+  position: static;
+  top: auto;
+  right: auto;
 }
 
 .copy-badge {
@@ -1461,6 +1536,16 @@ img {
     padding: 18px;
   }
 
+  .indicator-legend {
+    gap: 6px;
+  }
+
+  .indicator-legend span {
+    font-size: 11px;
+    min-height: 28px;
+    padding: 5px 8px;
+  }
+
   .modal-actions {
     width: 100%;
     align-items: stretch;
@@ -1488,14 +1573,18 @@ img {
 
   .modal-card-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 22px 8px;
+    gap: 24px 8px;
     padding: 20px 10px 28px;
   }
 
-  .mana-chip {
-    left: 7%;
-    width: 28px;
-    height: 28px;
+  .card-indicator-row {
+    gap: 4px;
+    padding: 3px 5px;
+  }
+
+  .card-indicator {
+    min-width: 26px;
+    height: 26px;
     font-size: 12px;
   }
 

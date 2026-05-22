@@ -1022,7 +1022,7 @@ function openCollectionModal(profile, setRow, options = {}) {
   const goldenCount = currentModalCards.filter((row) => row.golden > 0).length;
   elements.modalSetTitle.textContent = setRow.name;
   renderModalStats(ownedCount, currentModalCards.length, goldenCount);
-  elements.modalSetSubtitle.textContent = `${formatNumber(setRow.owned)} карт в коллекции · ${formatNumber(goldenCount)} ${pluralRu(goldenCount, "карта", "карты", "карт")} с золотыми копиями · сортировка по мане и редкости`;
+  elements.modalSetSubtitle.textContent = `${formatNumber(setRow.owned)} карт в коллекции · ${formatNumber(goldenCount)} ${pluralRu(goldenCount, "карта", "карты", "карт")} с золотыми копиями`;
   renderModalSortControls();
   renderModalCardGallery();
 
@@ -1117,8 +1117,10 @@ function renderModalCardGallery() {
       : `${row.name}: нет в коллекции`;
     item.innerHTML = `
       <img src="${escapeHtml(cardRemoteImageUrl(row.cardId))}" alt="${escapeHtml(row.name)}" loading="lazy" decoding="async" />
-      <span class="mana-chip" title="Стоимость маны">${formatNumber(row.cost)}</span>
-      ${copyBadges(row)}
+      <span class="card-indicator-row">
+        <span class="card-indicator is-mana" title="Стоимость маны">${formatNumber(row.cost)}</span>
+        ${copyBadges(row, { inline: true })}
+      </span>
     `;
     item.addEventListener("click", () => openCardLightbox(index));
     fragment.appendChild(item);
@@ -1151,7 +1153,8 @@ function closeCardLightbox() {
 
 function copyBadges(row, options = {}) {
   const badges = copyBadgeItems(row, options);
-  return badges ? `<span class="copy-badges">${badges}</span>` : "";
+  const className = options.inline ? "copy-badges is-inline" : "copy-badges";
+  return badges ? `<span class="${className}">${badges}</span>` : "";
 }
 
 function copyBadgeItems(row, options = {}) {
