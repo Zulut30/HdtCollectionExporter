@@ -8,6 +8,8 @@ namespace HdtCollectionExporter.UI
 
         public string BrandLine { get; set; }
 
+        public string HeaderDescription { get; set; }
+
         public string OutputFolder { get; set; }
 
         public string Browse { get; set; }
@@ -20,13 +22,37 @@ namespace HdtCollectionExporter.UI
 
         public string IncludeMetadata { get; set; }
 
+        public string FullExportTitle { get; set; }
+
         public string ExportJson { get; set; }
 
         public string ExportCsv { get; set; }
 
         public string ExportBoth { get; set; }
 
-        public string ExportChanges { get; set; }
+        public string ChangesExportTitle { get; set; }
+
+        public string ChangesHelp { get; set; }
+
+        public string ExportChangesJson { get; set; }
+
+        public string ExportChangesCsv { get; set; }
+
+        public string ExportChangesBoth { get; set; }
+
+        public string BaselineTitle { get; set; }
+
+        public string BaselineNotFound { get; set; }
+
+        public string BaselineReadyPrefix { get; set; }
+
+        public string BaselineReadyMiddle { get; set; }
+
+        public string SetBaseline { get; set; }
+
+        public string ImportBaseline { get; set; }
+
+        public string ClearBaseline { get; set; }
 
         public string Status { get; set; }
 
@@ -47,6 +73,20 @@ namespace HdtCollectionExporter.UI
         public string ChangesSuccessPrefix { get; set; }
 
         public string ChangesSuccessMiddle { get; set; }
+
+        public string BaselineCreated { get; set; }
+
+        public string BaselineSavedPrefix { get; set; }
+
+        public string BaselineSavedSuffix { get; set; }
+
+        public string BaselineImportedPrefix { get; set; }
+
+        public string BaselineCleared { get; set; }
+
+        public string ImportBaselineDialogTitle { get; set; }
+
+        public string ImportBaselineFailedPrefix { get; set; }
 
         public string ErrorPrefix { get; set; }
 
@@ -69,16 +109,29 @@ namespace HdtCollectionExporter.UI
                 WindowTitle = "Collection Exporter by Manacost",
                 HeaderTitle = "Collection Exporter",
                 BrandLine = "by Manacost",
+                HeaderDescription = "Local collection export for JSON, CSV, and changes since the last baseline.",
                 OutputFolder = "Output folder",
                 Browse = "Browse...",
                 OptionsTitle = "Export options",
                 IncludeCardNames = "include card names",
                 IncludeGoldenCount = "include golden count",
                 IncludeMetadata = "include metadata",
+                FullExportTitle = "Full export",
                 ExportJson = "Export JSON",
                 ExportCsv = "Export CSV",
                 ExportBoth = "Export Both",
-                ExportChanges = "Export Changes",
+                ChangesExportTitle = "Changes export",
+                ChangesHelp = "Exports only differences compared with the saved baseline.",
+                ExportChangesJson = "Changes JSON",
+                ExportChangesCsv = "Changes CSV",
+                ExportChangesBoth = "Changes Both",
+                BaselineTitle = "Baseline",
+                BaselineNotFound = "Baseline: not found. Run a full export, set current baseline, or import an old full JSON export.",
+                BaselineReadyPrefix = "Baseline: ",
+                BaselineReadyMiddle = " cards, ",
+                SetBaseline = "Set current",
+                ImportBaseline = "Import JSON",
+                ClearBaseline = "Clear",
                 Status = "Status",
                 PrivacyNote = "Local export by Manacost. No collection data is sent to external services.",
                 FolderDialogDescription = "Select collection export folder",
@@ -89,6 +142,13 @@ namespace HdtCollectionExporter.UI
                 SuccessMiddle = " cards to ",
                 ChangesSuccessPrefix = "Success: exported ",
                 ChangesSuccessMiddle = " changes to ",
+                BaselineCreated = "Baseline was created from the current collection. Make collection changes, then export changes again.",
+                BaselineSavedPrefix = "Baseline saved: ",
+                BaselineSavedSuffix = " cards.",
+                BaselineImportedPrefix = "Baseline imported: ",
+                BaselineCleared = "Baseline cleared.",
+                ImportBaselineDialogTitle = "Select full collection JSON export",
+                ImportBaselineFailedPrefix = "Could not import baseline: ",
                 ErrorPrefix = "Error: ",
                 NoPreviousExport = "No previous export was found. Run Export Both once before exporting changes.",
                 CannotWrite = "Cannot write to the output folder: ",
@@ -106,16 +166,29 @@ namespace HdtCollectionExporter.UI
                 WindowTitle = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438 \u043e\u0442 Manacost",
                 HeaderTitle = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438",
                 BrandLine = "\u043e\u0442 \u043a\u043e\u043c\u0430\u043d\u0434\u044b Manacost",
+                HeaderDescription = "\u041b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0439 \u044d\u043a\u0441\u043f\u043e\u0440\u0442 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438 \u0432 JSON, CSV \u0438 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f \u0441 \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0435\u0433\u043e baseline.",
                 OutputFolder = "\u041f\u0430\u043f\u043a\u0430 \u044d\u043a\u0441\u043f\u043e\u0440\u0442\u0430",
                 Browse = "\u0412\u044b\u0431\u0440\u0430\u0442\u044c...",
                 OptionsTitle = "\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438 \u044d\u043a\u0441\u043f\u043e\u0440\u0442\u0430",
                 IncludeCardNames = "\u0434\u043e\u0431\u0430\u0432\u043b\u044f\u0442\u044c \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f \u043a\u0430\u0440\u0442",
                 IncludeGoldenCount = "\u0434\u043e\u0431\u0430\u0432\u043b\u044f\u0442\u044c \u0437\u043e\u043b\u043e\u0442\u044b\u0435/\u043f\u0440\u0435\u043c\u0438\u0443\u043c \u043a\u0430\u0440\u0442\u044b",
                 IncludeMetadata = "\u0434\u043e\u0431\u0430\u0432\u043b\u044f\u0442\u044c \u043c\u0435\u0442\u0430\u0434\u0430\u043d\u043d\u044b\u0435",
+                FullExportTitle = "\u041f\u043e\u043b\u043d\u044b\u0439 \u044d\u043a\u0441\u043f\u043e\u0440\u0442",
                 ExportJson = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 JSON",
                 ExportCsv = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 CSV",
                 ExportBoth = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043e\u0431\u0430",
-                ExportChanges = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439",
+                ChangesExportTitle = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439",
+                ChangesHelp = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442\u0438\u0440\u0443\u0435\u0442 \u0442\u043e\u043b\u044c\u043a\u043e \u043e\u0442\u043b\u0438\u0447\u0438\u044f \u043e\u0442 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u043d\u043e\u0433\u043e baseline.",
+                ExportChangesJson = "\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f JSON",
+                ExportChangesCsv = "\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f CSV",
+                ExportChangesBoth = "\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f: \u043e\u0431\u0430",
+                BaselineTitle = "Baseline",
+                BaselineNotFound = "Baseline: \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d. \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u043f\u043e\u043b\u043d\u044b\u0439 \u044d\u043a\u0441\u043f\u043e\u0440\u0442 \u0438\u043b\u0438 Set current.",
+                BaselineReadyPrefix = "Baseline: ",
+                BaselineReadyMiddle = " \u043a\u0430\u0440\u0442, ",
+                SetBaseline = "\u0422\u0435\u043a\u0443\u0449\u0430\u044f \u0431\u0430\u0437\u0430",
+                ImportBaseline = "\u0418\u043c\u043f\u043e\u0440\u0442 JSON",
+                ClearBaseline = "\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c",
                 Status = "\u0421\u0442\u0430\u0442\u0443\u0441",
                 PrivacyNote = "\u041b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0439 \u044d\u043a\u0441\u043f\u043e\u0440\u0442 \u043e\u0442 Manacost. \u0414\u0430\u043d\u043d\u044b\u0435 \u043d\u0435 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0442\u0441\u044f \u0432\u043e \u0432\u043d\u0435\u0448\u043d\u0438\u0435 \u0441\u0435\u0440\u0432\u0438\u0441\u044b.",
                 FolderDialogDescription = "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u0430\u043f\u043a\u0443 \u0434\u043b\u044f \u044d\u043a\u0441\u043f\u043e\u0440\u0442\u0430 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438",
@@ -126,6 +199,13 @@ namespace HdtCollectionExporter.UI
                 SuccessMiddle = " \u043a\u0430\u0440\u0442 \u0432 ",
                 ChangesSuccessPrefix = "\u0423\u0441\u043f\u0435\u0448\u043d\u043e: \u044d\u043a\u0441\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u043e ",
                 ChangesSuccessMiddle = " \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439 \u0432 ",
+                BaselineCreated = "Baseline \u0441\u043e\u0437\u0434\u0430\u043d \u0438\u0437 \u0442\u0435\u043a\u0443\u0449\u0435\u0439 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438. \u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f \u0431\u0443\u0434\u0443\u0442 \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u044b \u043f\u043e\u0441\u043b\u0435 \u0441\u043b\u0435\u0434\u0443\u044e\u0449\u0438\u0445 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438.",
+                BaselineSavedPrefix = "Baseline \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d: ",
+                BaselineSavedSuffix = " \u043a\u0430\u0440\u0442.",
+                BaselineImportedPrefix = "Baseline \u0438\u043c\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u043d: ",
+                BaselineCleared = "Baseline \u043e\u0447\u0438\u0449\u0435\u043d.",
+                ImportBaselineDialogTitle = "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u043e\u043b\u043d\u044b\u0439 JSON \u044d\u043a\u0441\u043f\u043e\u0440\u0442 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438",
+                ImportBaselineFailedPrefix = "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0438\u043c\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c baseline: ",
                 ErrorPrefix = "\u041e\u0448\u0438\u0431\u043a\u0430: ",
                 NoPreviousExport = "\u041d\u0435\u0442 \u043f\u0440\u0435\u0434\u044b\u0434\u0443\u0449\u0435\u0433\u043e \u044d\u043a\u0441\u043f\u043e\u0440\u0442\u0430. \u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0441\u0434\u0435\u043b\u0430\u0439\u0442\u0435 \u043f\u043e\u043b\u043d\u044b\u0439 \u044d\u043a\u0441\u043f\u043e\u0440\u0442.",
                 CannotWrite = "\u041d\u0435\u0442 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043d\u0430 \u0437\u0430\u043f\u0438\u0441\u044c \u0432 \u043f\u0430\u043f\u043a\u0443: ",

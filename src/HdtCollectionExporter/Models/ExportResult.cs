@@ -16,6 +16,10 @@ namespace HdtCollectionExporter.Models
 
         public int ChangeCount { get; set; }
 
+        public bool BaselineCreated { get; set; }
+
+        public string BaselinePath { get; set; }
+
         public IList<string> Files { get; private set; }
     }
 }

@@ -79,10 +79,11 @@ The files are designed to be easy for websites to parse:
 
 After any full export, the plugin stores a local baseline snapshot inside the HDT plugin data folder. The baseline is not sent anywhere.
 
-Click `Export Changes` to compare the current collection with that baseline. The plugin writes two files:
+Use the changes export buttons to compare the current collection with that baseline:
 
-- `hearthstone-collection-changes-YYYYMMDD-HHMMSS.json`
-- `hearthstone-collection-changes-YYYYMMDD-HHMMSS.csv`
+- `Changes JSON` writes `hearthstone-collection-changes-YYYYMMDD-HHMMSS.json`.
+- `Changes CSV` writes `hearthstone-collection-changes-YYYYMMDD-HHMMSS.csv`.
+- `Changes Both` writes both files.
 
 The changes JSON includes:
 
@@ -96,14 +97,21 @@ The changes CSV has this header:
 changeType,cardId,dbfId,name,set,rarity,class,normalDelta,goldenDelta,ownedTotalDelta,previousNormal,previousGolden,previousOwnedTotal,currentNormal,currentGolden,currentOwnedTotal
 ```
 
-After `Export Changes` succeeds, the plugin updates the local baseline to the current collection. The next change export will contain only newer changes.
+The baseline block in the UI can:
+
+- `Set current` — save the current collection as the baseline without creating an upload file.
+- `Import JSON` — import an older full JSON export as the baseline.
+- `Clear` — remove saved baseline files.
+
+If no previous baseline exists, a changes export now creates a baseline from the current collection instead of failing. After any successful changes export, the plugin updates the local baseline to the current collection. The next change export will contain only newer changes.
 
 После любого полного экспорта плагин сохраняет локальный baseline-снимок в папке данных HDT-плагина. Этот baseline никуда не отправляется.
 
-Кнопка `Export Changes` / `Экспорт изменений` сравнивает текущую коллекцию с baseline. Плагин создает два файла:
+Кнопки экспорта изменений сравнивают текущую коллекцию с baseline:
 
-- `hearthstone-collection-changes-YYYYMMDD-HHMMSS.json`
-- `hearthstone-collection-changes-YYYYMMDD-HHMMSS.csv`
+- `Изменения JSON` создает `hearthstone-collection-changes-YYYYMMDD-HHMMSS.json`.
+- `Изменения CSV` создает `hearthstone-collection-changes-YYYYMMDD-HHMMSS.csv`.
+- `Изменения: оба` создает оба файла.
 
 JSON изменений содержит:
 
@@ -111,7 +119,13 @@ JSON изменений содержит:
 - `cards` — только карты, у которых изменились количества, с `changeType`, `previous`, `current`, `delta`.
 - `dust`, `cardBacks`, `favoriteCardBack`, `favoriteHeroes`, `playerRecords`, `user` — только измененные секции профиля.
 
-После успешного `Export Changes` baseline обновляется до текущей коллекции. Следующий экспорт изменений будет содержать только более новые изменения.
+Блок baseline в UI умеет:
+
+- `Текущая база` — сохранить текущую коллекцию как baseline без создания файла для загрузки.
+- `Импорт JSON` — импортировать старый полный JSON экспорт как baseline.
+- `Очистить` — удалить сохраненные baseline-файлы.
+
+Если baseline еще нет, экспорт изменений теперь создает baseline из текущей коллекции вместо ошибки. После успешного экспорта изменений baseline обновляется до текущей коллекции. Следующий экспорт изменений будет содержать только более новые изменения.
 
 ## Privacy / Приватность
 
@@ -188,7 +202,7 @@ Do not copy `.sln`, `.csproj`, source files, `bin`, or `obj`.
 3. Enable either `Collection Exporter by Manacost` or `Экспорт коллекции от Manacost` in HDT plugin settings.
 4. Open the plugin from HDT's `Plugins` menu.
 5. Choose an output folder.
-6. Click `Export JSON`, `Export CSV`, `Export Both`, or `Export Changes`.
+6. Click `Export JSON`, `Export CSV`, `Export Both`, `Changes JSON`, `Changes CSV`, or `Changes Both`.
 
 Default output folder:
 

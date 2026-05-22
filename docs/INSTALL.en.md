@@ -97,7 +97,9 @@ Choose an output folder and click:
 - `Export JSON`
 - `Export CSV`
 - `Export Both`
-- `Export Changes`
+- `Changes JSON`
+- `Changes CSV`
+- `Changes Both`
 
 Default output folder:
 
@@ -105,14 +107,20 @@ Default output folder:
 Documents\HDT Collection Exports
 ```
 
-`Export Changes` works after at least one full export. The plugin compares the current collection with the last local baseline and creates:
+Changes export compares the current collection with the last local baseline and creates:
 
 ```text
 hearthstone-collection-changes-YYYYMMDD-HHMMSS.json
 hearthstone-collection-changes-YYYYMMDD-HHMMSS.csv
 ```
 
-After a successful changes export, the baseline is updated to the current collection.
+The baseline tools are:
+
+- `Set current` — save the current collection as the baseline.
+- `Import JSON` — import an older full JSON export as the baseline.
+- `Clear` — remove saved baseline files.
+
+If there is no baseline yet, changes export creates one from the current collection instead of failing. After a successful changes export, the baseline is updated to the current collection.
 
 ## Troubleshooting
 
@@ -144,6 +152,6 @@ Choose another output folder, for example:
 Documents\HDT Collection Exports
 ```
 
-### Export Changes says there is no previous export
+### Changes export creates a baseline instead of writing changes
 
-Run `Export Both` once. After that, `Export Changes` will export only differences since the last successful full or changes export.
+That means there was no previous baseline. Make changes to the collection and run `Changes JSON`, `Changes CSV`, or `Changes Both` again.

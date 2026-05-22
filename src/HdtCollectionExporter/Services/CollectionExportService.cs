@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using HdtCollectionExporter.Models;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace HdtCollectionExporter.Services
 {
@@ -16,6 +17,7 @@ namespace HdtCollectionExporter.Services
         private const int ExportVersion = 2;
         private readonly ICollectionProvider _collectionProvider;
         private readonly string _baselineSnapshotPath;
+        private readonly IList<string> _baselineCandidatePaths;
 
         public CollectionExportService(ICollectionProvider collectionProvider)
             : this(collectionProvider, null)
@@ -23,11 +25,20 @@ namespace HdtCollectionExporter.Services
         }
 
         public CollectionExportService(ICollectionProvider collectionProvider, string baselineSnapshotPath)
+            : this(collectionProvider, baselineSnapshotPath, null)
+        {
+        }
+
+        public CollectionExportService(
+            ICollectionProvider collectionProvider,
+            string baselineSnapshotPath,
+            IEnumerable<string> baselineCandidatePaths)
         {
             if(collectionProvider == null)
                 throw new ArgumentNullException("collectionProvider");
             _collectionProvider = collectionProvider;
             _baselineSnapshotPath = baselineSnapshotPath;
+            _baselineCandidatePaths = BuildBaselineCandidatePaths(baselineSnapshotPath, baselineCandidatePaths);
         }
 
         public async Task<ExportResult> ExportAsync(ExportFormat format, ExportOptions options)
@@ -66,7 +77,7 @@ namespace HdtCollectionExporter.Services
             return result;
         }
 
-        public async Task<ExportResult> ExportChangesAsync(ExportOptions options)
+        public async Task<ExportResult> ExportChangesAsync(ExportFormat format, ExportOptions options)
         {
             if(options == null)
                 throw new ArgumentNullException("options");
@@ -75,36 +86,108 @@ namespace HdtCollectionExporter.Services
 
             var outputFolder = PrepareOutputFolder(options.OutputFolder);
             var previousDocument = LoadBaselineDocument(outputFolder);
-            if(previousDocument == null)
-            {
-                throw new NoPreviousExportException(
-                    "No previous collection export was found. Run a full export once before exporting changes.");
-            }
-
             var snapshot = await GetSnapshotAsync(options);
             var exportedAt = DateTimeOffset.Now;
             var currentDocument = ToDocument(snapshot, exportedAt);
+
+            if(previousDocument == null)
+            {
+                SaveBaselineDocument(currentDocument);
+                return new ExportResult
+                {
+                    ExportedAt = exportedAt,
+                    CardCount = currentDocument.Cards.Count,
+                    ChangeCount = 0,
+                    BaselineCreated = true,
+                    BaselinePath = _baselineSnapshotPath
+                };
+            }
+
             var deltaDocument = BuildDeltaDocument(previousDocument, currentDocument, exportedAt);
             var baseName = "hearthstone-collection-changes-" + exportedAt.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
             var result = new ExportResult
             {
                 ExportedAt = exportedAt,
                 CardCount = currentDocument.Cards.Count,
-                ChangeCount = deltaDocument.Summary.TotalChanges
+                ChangeCount = deltaDocument.Summary.TotalChanges,
+                BaselinePath = _baselineSnapshotPath
             };
 
-            var jsonPath = Path.Combine(outputFolder, baseName + ".json");
-            var csvPath = Path.Combine(outputFolder, baseName + ".csv");
-            await Task.Run(delegate
+            if((format & ExportFormat.Json) == ExportFormat.Json)
             {
-                WriteDeltaJson(jsonPath, deltaDocument);
-                WriteDeltaCsv(csvPath, deltaDocument.Cards);
-            });
-            result.Files.Add(jsonPath);
-            result.Files.Add(csvPath);
+                var path = Path.Combine(outputFolder, baseName + ".json");
+                await Task.Run(delegate { WriteDeltaJson(path, deltaDocument); });
+                result.Files.Add(path);
+            }
+
+            if((format & ExportFormat.Csv) == ExportFormat.Csv)
+            {
+                var path = Path.Combine(outputFolder, baseName + ".csv");
+                await Task.Run(delegate { WriteDeltaCsv(path, deltaDocument.Cards); });
+                result.Files.Add(path);
+            }
 
             SaveBaselineDocument(currentDocument);
             return result;
+        }
+
+        public async Task<BaselineStatus> SaveCurrentAsBaselineAsync(ExportOptions options)
+        {
+            if(options == null)
+                throw new ArgumentNullException("options");
+
+            var snapshot = await GetSnapshotAsync(options);
+            var exportedAt = DateTimeOffset.Now;
+            var document = ToDocument(snapshot, exportedAt);
+            SaveBaselineDocument(document);
+            return GetBaselineStatus();
+        }
+
+        public BaselineStatus ImportBaselineFile(string path)
+        {
+            var document = TryReadDocument(path);
+            if(document == null)
+                throw new InvalidOperationException("Selected file is not a valid full collection JSON export.");
+
+            SaveBaselineDocument(document);
+            return GetBaselineStatus();
+        }
+
+        public void ClearBaseline()
+        {
+            foreach(var path in _baselineCandidatePaths)
+            {
+                try
+                {
+                    if(!string.IsNullOrWhiteSpace(path) && File.Exists(path))
+                        File.Delete(path);
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        public BaselineStatus GetBaselineStatus()
+        {
+            foreach(var path in _baselineCandidatePaths)
+            {
+                var document = TryReadDocument(path);
+                if(document == null)
+                    continue;
+
+                var fileInfo = new FileInfo(path);
+                return new BaselineStatus
+                {
+                    Exists = true,
+                    Path = path,
+                    ExportedAt = document.ExportedAt,
+                    CardCount = document.Cards != null ? document.Cards.Count : 0,
+                    LastWriteTimeUtc = fileInfo.LastWriteTimeUtc
+                };
+            }
+
+            return new BaselineStatus { Exists = false, Path = _baselineSnapshotPath };
         }
 
         private async Task<CollectionSnapshot> GetSnapshotAsync(ExportOptions options)
@@ -169,11 +252,35 @@ namespace HdtCollectionExporter.Services
 
         private CollectionExportDocument LoadBaselineDocument(string outputFolder)
         {
-            var document = TryReadDocument(_baselineSnapshotPath);
-            if(document != null)
-                return document;
+            foreach(var path in _baselineCandidatePaths)
+            {
+                var document = TryReadDocument(path);
+                if(document != null)
+                    return document;
+            }
 
             return LoadLatestFullExportDocument(outputFolder);
+        }
+
+        private static IList<string> BuildBaselineCandidatePaths(
+            string primaryPath,
+            IEnumerable<string> additionalPaths)
+        {
+            var paths = new List<string>();
+            if(!string.IsNullOrWhiteSpace(primaryPath))
+                paths.Add(primaryPath);
+            if(additionalPaths != null)
+            {
+                foreach(var path in additionalPaths)
+                {
+                    if(!string.IsNullOrWhiteSpace(path))
+                        paths.Add(path);
+                }
+            }
+
+            return paths
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
         }
 
         private static CollectionExportDocument LoadLatestFullExportDocument(string outputFolder)
@@ -203,7 +310,13 @@ namespace HdtCollectionExporter.Services
 
             try
             {
-                var document = JsonConvert.DeserializeObject<CollectionExportDocument>(File.ReadAllText(path));
+                var text = File.ReadAllText(path);
+                var parsed = JObject.Parse(text);
+                var exportType = parsed.Value<string>("exportType");
+                if(string.Equals(exportType, "changes", StringComparison.OrdinalIgnoreCase))
+                    return null;
+
+                var document = parsed.ToObject<CollectionExportDocument>();
                 if(document == null || document.Cards == null)
                     return null;
                 document.CardBacks = document.CardBacks ?? new List<int>();

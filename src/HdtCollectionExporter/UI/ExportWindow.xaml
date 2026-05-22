@@ -2,10 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Collection Exporter by Manacost"
-        MinWidth="700"
-        MinHeight="460"
-        Width="780"
-        Height="520"
+        MinWidth="780"
+        MinHeight="620"
+        Width="860"
+        Height="700"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResizeWithGrip"
         Background="#202124"
@@ -42,7 +42,7 @@
             <Setter Property="Foreground" Value="#F2F4F8" />
             <Setter Property="BorderBrush" Value="#7C8490" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="Padding" Value="12,7" />
             <Setter Property="MinHeight" Value="34" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -62,142 +62,267 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="0"
+            <Border Grid.Row="0"
                     Grid.Column="0"
                     Grid.ColumnSpan="3"
-                    Margin="0,0,0,18">
-            <TextBlock x:Name="HeaderTitleTextBlock"
-                       FontSize="22"
+                    Margin="0,0,0,16"
+                    Padding="14"
+                    Background="#15171B"
+                    BorderBrush="#3E444E"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="190" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0"
+                            Width="178"
+                            Height="78"
+                            Background="#0E1014"
+                            BorderBrush="#3E444E"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            ClipToBounds="True">
+                        <Image Source="/HdtCollectionExporter;component/Assets/manacost_logo.jpg"
+                               Stretch="UniformToFill" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1"
+                                Margin="14,0,0,0"
+                                VerticalAlignment="Center">
+                        <TextBlock x:Name="HeaderTitleTextBlock"
+                                   FontSize="23"
+                                   FontWeight="SemiBold"
+                                   Text="Collection Exporter" />
+                        <TextBlock x:Name="BrandTextBlock"
+                                   Margin="0,4,0,0"
+                                   Foreground="#A9D36F"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   Text="by Manacost" />
+                        <TextBlock x:Name="HeaderDescriptionTextBlock"
+                                   Margin="0,8,0,0"
+                                   Foreground="#AEB4BC"
+                                   TextWrapping="Wrap"
+                                   Text="Local collection export for JSON, CSV, and changes since the last baseline." />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <TextBlock x:Name="OutputFolderLabel"
+                       Grid.Row="1"
+                       Grid.Column="0"
+                       Margin="0,6,12,12"
+                       VerticalAlignment="Center"
                        FontWeight="SemiBold"
-                       Text="Collection Exporter" />
-            <TextBlock x:Name="BrandTextBlock"
-                       Margin="0,4,0,0"
-                       Foreground="#A9D36F"
-                       FontSize="14"
-                       FontWeight="SemiBold"
-                       Text="by Manacost" />
-        </StackPanel>
+                       Text="Output folder" />
+            <TextBox x:Name="OutputFolderTextBox"
+                     Grid.Row="1"
+                     Grid.Column="1"
+                     Margin="0,0,10,12"
+                     MinWidth="360"
+                     VerticalAlignment="Center" />
+            <Button x:Name="BrowseButton"
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Margin="0,0,0,12"
+                    MinWidth="96"
+                    Click="BrowseButton_OnClick"
+                    Content="Browse..." />
 
-        <TextBlock x:Name="OutputFolderLabel"
-                   Grid.Row="1"
-                   Grid.Column="0"
-                   Margin="0,6,12,12"
-                   VerticalAlignment="Center"
-                   FontWeight="SemiBold"
-                   Text="Output folder" />
-        <TextBox x:Name="OutputFolderTextBox"
-                 Grid.Row="1"
-                 Grid.Column="1"
-                 Margin="0,0,10,12"
-                 MinWidth="360"
-                 VerticalAlignment="Center" />
-        <Button x:Name="BrowseButton"
-                Grid.Row="1"
-                Grid.Column="2"
-                Margin="0,0,0,12"
-                MinWidth="96"
-                Click="BrowseButton_OnClick"
-                Content="Browse..." />
-
-        <Border Grid.Row="2"
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
-                Margin="0,0,0,14"
-                Padding="14,12"
-                Background="#181A1F"
-                BorderBrush="#3E444E"
-                BorderThickness="1"
-                CornerRadius="6">
-            <StackPanel>
-                <TextBlock x:Name="OptionsTitleTextBlock"
-                           Margin="0,0,0,6"
-                           FontWeight="SemiBold"
-                           Text="Export options" />
-                <WrapPanel>
-                    <CheckBox x:Name="IncludeCardNamesCheckBox"
-                              Content="include card names" />
-                    <CheckBox x:Name="IncludeGoldenCountCheckBox"
-                              Content="include golden count" />
-                    <CheckBox x:Name="IncludeMetadataCheckBox"
-                              Content="include metadata" />
-                </WrapPanel>
-            </StackPanel>
-        </Border>
-
-        <StackPanel Grid.Row="3"
+            <Border Grid.Row="2"
                     Grid.Column="0"
                     Grid.ColumnSpan="3"
-                    Margin="0,0,0,14"
-                    Orientation="Horizontal">
-            <Button x:Name="ExportJsonButton"
-                    MinWidth="128"
-                    Margin="0,0,10,0"
-                    Click="ExportJsonButton_OnClick"
-                    Content="Export JSON" />
-            <Button x:Name="ExportCsvButton"
-                    MinWidth="128"
-                    Margin="0,0,10,0"
-                    Click="ExportCsvButton_OnClick"
-                    Content="Export CSV" />
-            <Button x:Name="ExportBothButton"
-                    MinWidth="140"
-                    Margin="0,0,10,0"
-                    Background="#6F2DBD"
-                    BorderBrush="#B693E5"
-                    Click="ExportBothButton_OnClick"
-                    Content="Export Both" />
-            <Button x:Name="ExportChangesButton"
-                    MinWidth="150"
-                    Click="ExportChangesButton_OnClick"
-                    Content="Export Changes" />
-        </StackPanel>
+                    Margin="0,0,0,12"
+                    Padding="14,12"
+                    Background="#181A1F"
+                    BorderBrush="#3E444E"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                <StackPanel>
+                    <TextBlock x:Name="OptionsTitleTextBlock"
+                               Margin="0,0,0,6"
+                               FontWeight="SemiBold"
+                               Text="Export options" />
+                    <WrapPanel>
+                        <CheckBox x:Name="IncludeCardNamesCheckBox"
+                                  Content="include card names" />
+                        <CheckBox x:Name="IncludeGoldenCountCheckBox"
+                                  Content="include golden count" />
+                        <CheckBox x:Name="IncludeMetadataCheckBox"
+                                  Content="include metadata" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
 
-        <Border Grid.Row="4"
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
-                Padding="14"
-                Background="#15171B"
-                BorderBrush="#5F6673"
-                BorderThickness="1"
-                CornerRadius="6">
-            <StackPanel>
-                <TextBlock x:Name="StatusLabelTextBlock"
-                           FontSize="14"
-                           FontWeight="SemiBold"
-                           Text="Status" />
-                <TextBlock x:Name="StatusTextBlock"
-                           Margin="0,8,0,0"
-                           Foreground="#F2F4F8"
-                           TextWrapping="Wrap" />
-                <TextBlock x:Name="LastExportTextBlock"
-                           Margin="0,10,0,0"
-                           Foreground="#AEB4BC"
-                           TextWrapping="Wrap" />
-            </StackPanel>
-        </Border>
+            <Border Grid.Row="3"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"
+                    Margin="0,0,0,12"
+                    Padding="14,12"
+                    Background="#181A1F"
+                    BorderBrush="#3E444E"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                <StackPanel>
+                    <TextBlock x:Name="FullExportTitleTextBlock"
+                               Margin="0,0,0,8"
+                               FontWeight="SemiBold"
+                               Text="Full export" />
+                    <WrapPanel>
+                        <Button x:Name="ExportJsonButton"
+                                MinWidth="126"
+                                Margin="0,0,10,8"
+                                Click="ExportJsonButton_OnClick"
+                                Content="Export JSON" />
+                        <Button x:Name="ExportCsvButton"
+                                MinWidth="126"
+                                Margin="0,0,10,8"
+                                Click="ExportCsvButton_OnClick"
+                                Content="Export CSV" />
+                        <Button x:Name="ExportBothButton"
+                                MinWidth="138"
+                                Margin="0,0,10,8"
+                                Background="#6F2DBD"
+                                BorderBrush="#B693E5"
+                                Click="ExportBothButton_OnClick"
+                                Content="Export Both" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
 
-        <TextBlock x:Name="PrivacyNoteTextBlock"
-                   Grid.Row="5"
-                   Grid.Column="0"
-                   Grid.ColumnSpan="3"
-                   Margin="0,14,0,0"
-                   Foreground="#AEB4BC"
-                   TextWrapping="Wrap"
-                   Text="Local export by Manacost. No collection data is sent to external services." />
-    </Grid>
+            <Border Grid.Row="4"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"
+                    Margin="0,0,0,12"
+                    Padding="14,12"
+                    Background="#181A1F"
+                    BorderBrush="#3E444E"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                <StackPanel>
+                    <TextBlock x:Name="ChangesExportTitleTextBlock"
+                               Margin="0,0,0,4"
+                               FontWeight="SemiBold"
+                               Text="Changes export" />
+                    <TextBlock x:Name="ChangesHelpTextBlock"
+                               Margin="0,0,0,10"
+                               Foreground="#AEB4BC"
+                               TextWrapping="Wrap"
+                               Text="Exports only differences compared with the saved baseline." />
+                    <WrapPanel>
+                        <Button x:Name="ExportChangesJsonButton"
+                                MinWidth="154"
+                                Margin="0,0,10,8"
+                                Click="ExportChangesJsonButton_OnClick"
+                                Content="Changes JSON" />
+                        <Button x:Name="ExportChangesCsvButton"
+                                MinWidth="154"
+                                Margin="0,0,10,8"
+                                Click="ExportChangesCsvButton_OnClick"
+                                Content="Changes CSV" />
+                        <Button x:Name="ExportChangesBothButton"
+                                MinWidth="166"
+                                Margin="0,0,10,8"
+                                Background="#2F6F5E"
+                                BorderBrush="#82C8B4"
+                                Click="ExportChangesBothButton_OnClick"
+                                Content="Changes Both" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="5"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"
+                    Margin="0,0,0,12"
+                    Padding="14,12"
+                    Background="#181A1F"
+                    BorderBrush="#3E444E"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                <StackPanel>
+                    <TextBlock x:Name="BaselineTitleTextBlock"
+                               Margin="0,0,0,6"
+                               FontWeight="SemiBold"
+                               Text="Baseline" />
+                    <TextBlock x:Name="BaselineStatusTextBlock"
+                               Margin="0,0,0,10"
+                               Foreground="#AEB4BC"
+                               TextWrapping="Wrap"
+                               Text="Baseline: not found" />
+                    <WrapPanel>
+                        <Button x:Name="SetBaselineButton"
+                                MinWidth="150"
+                                Margin="0,0,10,8"
+                                Click="SetBaselineButton_OnClick"
+                                Content="Set current" />
+                        <Button x:Name="ImportBaselineButton"
+                                MinWidth="150"
+                                Margin="0,0,10,8"
+                                Click="ImportBaselineButton_OnClick"
+                                Content="Import JSON" />
+                        <Button x:Name="ClearBaselineButton"
+                                MinWidth="130"
+                                Margin="0,0,10,8"
+                                Click="ClearBaselineButton_OnClick"
+                                Content="Clear" />
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="6"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"
+                    Padding="14"
+                    Background="#15171B"
+                    BorderBrush="#5F6673"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                <StackPanel>
+                    <TextBlock x:Name="StatusLabelTextBlock"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               Text="Status" />
+                    <TextBlock x:Name="StatusTextBlock"
+                               Margin="0,8,0,0"
+                               Foreground="#F2F4F8"
+                               TextWrapping="Wrap" />
+                    <TextBlock x:Name="LastExportTextBlock"
+                               Margin="0,10,0,0"
+                               Foreground="#AEB4BC"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <TextBlock x:Name="PrivacyNoteTextBlock"
+                       Grid.Row="7"
+                       Grid.Column="0"
+                       Grid.ColumnSpan="3"
+                       Margin="0,14,0,0"
+                       Foreground="#AEB4BC"
+                       TextWrapping="Wrap"
+                       Text="Local export by Manacost. No collection data is sent to external services." />
+        </Grid>
+    </ScrollViewer>
 </Window>

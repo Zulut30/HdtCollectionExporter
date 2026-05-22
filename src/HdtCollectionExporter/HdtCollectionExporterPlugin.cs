@@ -38,7 +38,7 @@ namespace HdtCollectionExporter
 
         public Version Version
         {
-            get { return new Version(1, 2, 0); }
+            get { return new Version(1, 2, 1); }
         }
 
         public MenuItem MenuItem
@@ -54,9 +54,10 @@ namespace HdtCollectionExporter
         public void OnLoad()
         {
             Directory.CreateDirectory(PluginDataDir);
+            Directory.CreateDirectory(SharedBaselineDir);
 
             _settings = ExporterSettings.Load(PluginDataDir);
-            _exportService = new CollectionExportService(new HdtCollectionProvider(), Path.Combine(PluginDataDir, "last-collection-export.json"));
+            _exportService = CreateExportService();
 
             _menuItem = new MenuItem { Header = Name };
             _menuItem.Click += delegate { OpenWindow(); };
@@ -100,6 +101,24 @@ namespace HdtCollectionExporter
             if(_settings != null)
                 _settings.Save(PluginDataDir);
         }
+
+        internal static string SharedBaselineDir
+        {
+            get { return Path.Combine(Config.Instance.DataDir, "HdtCollectionExporter"); }
+        }
+
+        internal static CollectionExportService CreateExportService()
+        {
+            var sharedBaselinePath = Path.Combine(SharedBaselineDir, "last-collection-export.json");
+            return new CollectionExportService(
+                new HdtCollectionProvider(),
+                sharedBaselinePath,
+                new[]
+                {
+                    sharedBaselinePath,
+                    Path.Combine(Config.Instance.DataDir, "HdtCollectionExporterRu", "last-collection-export.json")
+                });
+        }
     }
 
     public class HdtCollectionExporterRussianPlugin : IPlugin
@@ -131,7 +150,7 @@ namespace HdtCollectionExporter
 
         public Version Version
         {
-            get { return new Version(1, 2, 0); }
+            get { return new Version(1, 2, 1); }
         }
 
         public MenuItem MenuItem
@@ -147,9 +166,10 @@ namespace HdtCollectionExporter
         public void OnLoad()
         {
             Directory.CreateDirectory(PluginDataDir);
+            Directory.CreateDirectory(HdtCollectionExporterPlugin.SharedBaselineDir);
 
             _settings = ExporterSettings.Load(PluginDataDir);
-            _exportService = new CollectionExportService(new HdtCollectionProvider(), Path.Combine(PluginDataDir, "last-collection-export.json"));
+            _exportService = HdtCollectionExporterPlugin.CreateExportService();
 
             _menuItem = new MenuItem { Header = Name };
             _menuItem.Click += delegate { OpenWindow(); };
