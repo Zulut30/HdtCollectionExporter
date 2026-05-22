@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Карточка коллекции Manacost</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css?v=scroll-fix-2" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="support-banner" aria-label="Поддержка проекта">
+        <a class="support-banner-main" href="https://boosty.to/kolodahearthstone" target="_blank" rel="noopener noreferrer">
+          <img src="assets/ui/boosty.png" alt="" width="40" height="40" loading="eager" decoding="async" />
+          <span>Проект поддерживается благодаря подписчикам на Boosty</span>
+        </a>
+        <a class="support-link" href="https://github.com/Zulut30/HdtCollectionExporter" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.9c-2.8.6-3.4-1.2-3.4-1.2-.5-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 0 1.6 1 1.6 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .9-.3 2.8 1a9.7 9.7 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.8-2.3 4.6-4.6 4.9.4.3.7 1 .7 2v2.6c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" />
+          </svg>
+          Установить плагин HDT
+        </a>
+      </section>
+
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Карточка коллекции Manacost">
+          <img src="assets/ui/manacost_logo.jpg" alt="" width="46" height="46" decoding="async" />
+          <span>Карточка коллекции Manacost</span>
+        </a>
+        <div class="topbar-meta" aria-label="Статус приватности">
+          <span class="status-dot"></span>
+          Только локально
+        </div>
+      </header>
+
+      <section class="workspace" aria-label="Генератор карточки коллекции">
+        <aside class="control-panel">
+          <div class="panel-heading">
+            <h1>Преврати JSON-экспорт в карточку профиля</h1>
+            <p>Полный экспорт коллекции из HDT или HSTracker.</p>
+          </div>
+
+          <div id="dropZone" class="drop-zone" role="button" tabindex="0" aria-label="Перетащите JSON-экспорт или выберите файл">
+            <input id="fileInput" type="file" accept=".json,application/json" hidden />
+            <div class="drop-icon" aria-hidden="true">
+              <img src="assets/ui/card.webp" alt="" width="50" height="64" loading="lazy" decoding="async" />
+            </div>
+            <strong>Перетащи JSON-экспорт</strong>
+            <span id="dropHint">или выбери файл на этом компьютере</span>
+            <button id="chooseFileButton" class="button primary" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3v12m0-12 4 4m-4-4-4 4" />
+                <path d="M5 15v3a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-3" />
+              </svg>
+              Выбрать файл
+            </button>
+          </div>
+
+          <div class="source-card" aria-live="polite">
+            <div>
+              <span class="label">Файл</span>
+              <strong id="fileName">Файл не выбран</strong>
+            </div>
+            <div>
+              <span class="label">Схема</span>
+              <strong id="schemaVersion">Ожидание</strong>
+            </div>
+            <div>
+              <span class="label">Дата экспорта</span>
+              <strong id="exportedAt">Ожидание</strong>
+            </div>
+          </div>
+
+          <div class="option-panel" aria-label="Настройки подсчета">
+            <label class="toggle-row">
+              <input id="countDuplicates" type="checkbox" checked />
+              <span class="toggle-control" aria-hidden="true"></span>
+              <span>Учитывать дубликаты</span>
+            </label>
+            <label class="toggle-row">
+              <input id="includeGolden" type="checkbox" checked />
+              <span class="toggle-control" aria-hidden="true"></span>
+              <span>Учитывать золотые карты</span>
+            </label>
+          </div>
+
+          <p id="statusText" class="status-text">Готов к полному JSON-экспорту коллекции.</p>
+        </aside>
+
+        <section class="result-stage">
+          <article id="profileCard" class="profile-card is-empty" aria-live="polite">
+            <div class="card-art">
+              <img id="heroArt" src="assets/class_art/mage.png" alt="" decoding="async" fetchpriority="high" />
+              <div class="card-art-fade"></div>
+            </div>
+
+            <div class="card-content">
+              <div class="profile-head">
+                <div class="class-medallion">
+                  <img id="classIcon" src="assets/class_icon/mage.png" alt="" width="56" height="56" decoding="async" />
+                </div>
+                <div>
+                  <span id="sourceLabel" class="label">Ожидаю экспорт</span>
+                  <h2 id="playerName">Твой профиль Hearthstone</h2>
+                </div>
+              </div>
+
+              <div class="hero-line">
+                <div>
+                  <span class="label">Любимый класс</span>
+                  <strong id="favoriteClass">Маг</strong>
+                </div>
+                <div>
+                  <span class="label">Лучший по победам</span>
+                  <strong id="bestClass">Друид</strong>
+                </div>
+              </div>
+
+              <dl class="metric-grid">
+                <div>
+                  <dt>Карт в коллекции</dt>
+                  <dd id="ownedCards">-</dd>
+                </div>
+                <div>
+                  <dt>Золотые карты</dt>
+                  <dd id="premiumCards">-</dd>
+                </div>
+                <div>
+                  <dt>Пыль при распылении</dt>
+                  <dd id="dustCount">-</dd>
+                </div>
+                <div>
+                  <dt>Покрытие</dt>
+                  <dd id="coverage">-</dd>
+                </div>
+              </dl>
+
+              <div class="progress-block">
+                <div class="progress-copy">
+                  <span class="label">Состояние коллекции</span>
+                  <strong id="coverageText">Загрузи JSON-экспорт</strong>
+                </div>
+                <div class="progress-track" aria-hidden="true">
+                  <span id="coverageBar"></span>
+                </div>
+              </div>
+
+              <div class="section-row">
+                <span class="label">Топ классов</span>
+                <div id="topClasses" class="class-row"></div>
+              </div>
+
+              <div class="section-row">
+                <span class="label">Топ дополнений</span>
+                <div id="topSets" class="set-row"></div>
+              </div>
+
+              <div class="section-row">
+                <span class="label">Самые дорогие золотые</span>
+                <div id="expensiveCards" class="gold-card-row"></div>
+              </div>
+            </div>
+          </article>
+
+          <div class="action-bar">
+            <button id="exportButton" class="button primary" type="button" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 3v12" />
+                <path d="m7 10 5 5 5-5" />
+                <path d="M5 21h14" />
+              </svg>
+              Скачать PNG
+            </button>
+            <button id="resetButton" class="button secondary" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h10a6 6 0 1 1-5.2 9" />
+                <path d="M4 7l4-4" />
+                <path d="M4 7l4 4" />
+              </svg>
+              Сбросить
+            </button>
+          </div>
+
+          <section class="details-panel" aria-live="polite">
+            <div class="details-heading">
+              <span class="label">Карты по дополнениям</span>
+              <strong id="setsSummary">Загрузи JSON-экспорт</strong>
+            </div>
+            <div id="setBreakdown" class="expansion-list"></div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js?v=scroll-fix-2"></script>
+  </body>
+</html>
