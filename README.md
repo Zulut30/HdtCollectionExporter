@@ -1,157 +1,122 @@
-# HDT Collection Exporter by Manacost / Экспорт коллекции HDT от Manacost
+<p align="center">
+  <img src="src/HdtCollectionExporter/Assets/manacost_logo.jpg" alt="Manacost banner" width="820" />
+</p>
 
-HDT Collection Exporter by Manacost is a Hearthstone Deck Tracker plugin that exports a user's Hearthstone collection and related local profile data to JSON and CSV.
+<h1 align="center">HDT Collection Exporter by Manacost</h1>
 
-Экспорт коллекции HDT от Manacost — это плагин для Hearthstone Deck Tracker, который экспортирует коллекцию Hearthstone пользователя и связанные локальные данные профиля в JSON и CSV.
+<p align="center">
+  <strong>Collection JSON/CSV export plugin for <a href="https://github.com/HearthSim/Hearthstone-Deck-Tracker">HearthSim/Hearthstone-Deck-Tracker</a>.</strong>
+</p>
 
-The plugin is local-only: it does not send data to external services. The exported files are meant to be uploaded by the user manually to another website or tool.
+<p align="center">
+  <a href="https://github.com/HearthSim/Hearthstone-Deck-Tracker"><img alt="HDT Plugin" src="https://img.shields.io/badge/Hearthstone%20Deck%20Tracker-plugin-8A2BE2?style=for-the-badge"></a>
+  <a href="https://github.com/Zulut30/HdtCollectionExporter/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/Zulut30/HdtCollectionExporter?style=for-the-badge"></a>
+  <img alt="Windows" src="https://img.shields.io/badge/Windows-supported-0078D6?style=for-the-badge&logo=windows">
+  <img alt="Local only" src="https://img.shields.io/badge/privacy-local%20only-2F6F5E?style=for-the-badge">
+</p>
 
-Плагин работает только локально: он не отправляет данные во внешние сервисы. Экспортированные файлы пользователь может самостоятельно загрузить на внешний сайт или в другой инструмент.
+<p align="center">
+  <img alt="C Sharp" src="https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=csharp&logoColor=white">
+  <img alt=".NET Framework" src="https://img.shields.io/badge/.NET%20Framework-4.7.2-512BD4?style=for-the-badge&logo=dotnet&logoColor=white">
+  <img alt="WPF" src="https://img.shields.io/badge/UI-WPF-5C2D91?style=for-the-badge">
+  <img alt="JSON" src="https://img.shields.io/badge/export-JSON-000000?style=for-the-badge&logo=json&logoColor=white">
+  <img alt="CSV" src="https://img.shields.io/badge/export-CSV-217346?style=for-the-badge">
+</p>
 
-## Plugin Entries / Расширения
+## Overview
 
-The DLL exposes two HDT plugin entries:
+HDT Collection Exporter by Manacost is a local plugin for [Hearthstone Deck Tracker](https://github.com/HearthSim/Hearthstone-Deck-Tracker). It exports a user's Hearthstone collection and local profile data to files that can later be uploaded manually to another site or tool.
 
-- `Collection Exporter by Manacost` — English UI.
-- `Экспорт коллекции от Manacost` — Russian UI.
+Экспорт коллекции HDT от Manacost — локальный плагин для [Hearthstone Deck Tracker](https://github.com/HearthSim/Hearthstone-Deck-Tracker). Он экспортирует коллекцию Hearthstone и локальные данные профиля в файлы, которые пользователь может вручную загрузить на сайт или в другой инструмент.
 
-Both entries use the same export logic and are built by the Manacost team. They differ only by name, description, menu text, window text, and status messages.
+No network requests are made by the plugin during export.
 
-Оба расширения используют один и тот же код экспорта и сделаны командой Manacost. Отличаются только название, описание, меню, окно и статусы.
+## Features
 
-## Exported Data / Какие данные экспортируются
+- Full collection export to JSON.
+- Full collection export to UTF-8 CSV.
+- Changes-only export to JSON or CSV using a local baseline.
+- Local baseline controls: set current, import old full JSON, clear baseline.
+- Exports collection cards, dust, card backs, favorite card back, favorite heroes, player records, and basic user identifiers exposed by HDT.
+- English and Russian plugin entries in one DLL.
+- Manacost-branded WPF export window.
 
-JSON export schema version: `2`.
+## Download
 
-JSON export includes:
+Download the latest release:
 
-- `exportedAt` — export timestamp in ISO format.
-- `source` — `Hearthstone Deck Tracker plugin by Manacost`.
-- `version` — export schema version.
-- `user.battleTag` — user's BattleTag, if HDT can read it.
-- `user.accountHi` / `user.accountLo` — Hearthstone account identifiers exposed by HDT.
-- `dust` — current dust amount.
-- `cardBacks` — owned card back ids.
-- `favoriteCardBack` — selected favorite card back id.
-- `favoriteHeroes` — selected favorite hero portraits / hero skins.
-- `playerRecords` — raw player records from Hearthstone/HDT, grouped by numeric `type` and `data`, with `wins`, `losses`, and `ties`.
-- `cards` — owned cards with ids, metadata, normal/premium counts, trial counts, and totals.
+[**Latest Release**](https://github.com/Zulut30/HdtCollectionExporter/releases/latest)
 
-JSON содержит:
+Release assets:
 
-- `exportedAt` — время экспорта в ISO-формате.
-- `source` — `Hearthstone Deck Tracker plugin by Manacost`.
-- `version` — версия схемы экспорта.
-- `user.battleTag` — BattleTag пользователя, если HDT может его прочитать.
-- `user.accountHi` / `user.accountLo` — идентификаторы Hearthstone-аккаунта, доступные через HDT.
-- `dust` — текущее количество пыли.
-- `cardBacks` — id доступных рубашек карт.
-- `favoriteCardBack` — id выбранной любимой рубашки.
-- `favoriteHeroes` — выбранные любимые портреты героев / скины.
-- `playerRecords` — сырые записи статистики игрока из Hearthstone/HDT, сгруппированные по numeric `type` и `data`, с `wins`, `losses`, `ties`.
-- `cards` — карты в коллекции с id, метаданными, обычными/премиум количествами, trial-количествами и итогами.
+- `HdtCollectionExporter.dll` — plugin DLL for HDT.
+- `HdtCollectionExporter-vX.Y.Z.zip` — DLL plus install guides.
 
-CSV export keeps a stable table shape:
+## Install
+
+1. Download `HdtCollectionExporter.dll` from the latest release.
+2. Open Hearthstone Deck Tracker.
+3. Go to `Options > Tracker > Plugins`.
+4. Click `Plugins Folder`.
+5. Copy only `HdtCollectionExporter.dll` into that folder.
+6. Fully restart HDT, including the tray icon.
+7. Enable either `Collection Exporter by Manacost` or `Экспорт коллекции от Manacost`.
+
+Usually the HDT plugin folder is:
+
+```text
+%AppData%\HearthstoneDeckTracker\Plugins
+```
+
+More details:
+
+- [English install guide](docs/INSTALL.en.md)
+- [Русский гайд по установке](docs/INSTALL.ru.md)
+
+## Exported Data
+
+Full JSON export schema version: `2`.
+
+Top-level JSON fields:
+
+- `exportedAt`
+- `source`
+- `version`
+- `user`
+- `dust`
+- `cardBacks`
+- `favoriteCardBack`
+- `favoriteHeroes`
+- `playerRecords`
+- `cards`
+
+Full CSV keeps this stable header:
 
 ```text
 cardId,dbfId,name,set,rarity,class,normal,golden,ownedTotal
 ```
 
-In CSV, `golden` is a premium total: `golden + diamond + signature`. The full premium split is available in JSON as `golden`, `diamond`, `signature`, and `premiumTotal`.
+In CSV, `golden` is the total premium count: golden + diamond + signature. The detailed split is available in JSON.
 
-В CSV колонка `golden` означает общий premium count: золотые + diamond + signature. Полная разбивка доступна в JSON в полях `golden`, `diamond`, `signature`, `premiumTotal`.
+## Changes Export
 
-## Website Import Compatibility / Совместимость с сайтами
+The plugin stores a local baseline snapshot after a full export or when the user clicks `Set current`.
 
-The files are designed to be easy for websites to parse:
-
-- Full JSON has stable top-level fields and arrays. A website can read `version`, then import `cards`, `dust`, `cardBacks`, favorites, and profile data.
-- Full CSV is intentionally flat and keeps the fixed header `cardId,dbfId,name,set,rarity,class,normal,golden,ownedTotal`.
-- Change exports use `exportType: "changes"` and include a `summary` block, so a website can quickly decide whether anything changed before reading all records.
-
-Файлы специально сделаны удобными для сайтов:
-
-- Полный JSON имеет стабильные верхнеуровневые поля и массивы. Сайт читает `version`, затем импортирует `cards`, `dust`, `cardBacks`, избранное и данные профиля.
-- Полный CSV плоский и сохраняет фиксированный заголовок `cardId,dbfId,name,set,rarity,class,normal,golden,ownedTotal`.
-- Экспорт изменений использует `exportType: "changes"` и блок `summary`, поэтому сайт может быстро понять, есть ли изменения, не разбирая весь файл.
-
-## Change Exports / Экспорт изменений
-
-After any full export, the plugin stores a local baseline snapshot inside the HDT plugin data folder. The baseline is not sent anywhere.
-
-Use the changes export buttons to compare the current collection with that baseline:
+Changes export compares the current collection against the saved baseline:
 
 - `Changes JSON` writes `hearthstone-collection-changes-YYYYMMDD-HHMMSS.json`.
 - `Changes CSV` writes `hearthstone-collection-changes-YYYYMMDD-HHMMSS.csv`.
 - `Changes Both` writes both files.
 
-The changes JSON includes:
+If no baseline exists yet, the plugin creates one from the current collection instead of failing. The next changes export will then contain only newer changes.
 
-- `summary` — counters for cards, dust, card backs, favorite card back, favorite heroes, player records, and user profile changes.
-- `cards` — only card records whose counts changed, with `changeType`, `previous`, `current`, and `delta`.
-- `dust`, `cardBacks`, `favoriteCardBack`, `favoriteHeroes`, `playerRecords`, `user` — only changed profile sections.
-
-The changes CSV has this header:
-
-```text
-changeType,cardId,dbfId,name,set,rarity,class,normalDelta,goldenDelta,ownedTotalDelta,previousNormal,previousGolden,previousOwnedTotal,currentNormal,currentGolden,currentOwnedTotal
-```
-
-The baseline block in the UI can:
-
-- `Set current` — save the current collection as the baseline without creating an upload file.
-- `Import JSON` — import an older full JSON export as the baseline.
-- `Clear` — remove saved baseline files.
-
-If no previous baseline exists, a changes export now creates a baseline from the current collection instead of failing. After any successful changes export, the plugin updates the local baseline to the current collection. The next change export will contain only newer changes.
-
-После любого полного экспорта плагин сохраняет локальный baseline-снимок в папке данных HDT-плагина. Этот baseline никуда не отправляется.
-
-Кнопки экспорта изменений сравнивают текущую коллекцию с baseline:
-
-- `Изменения JSON` создает `hearthstone-collection-changes-YYYYMMDD-HHMMSS.json`.
-- `Изменения CSV` создает `hearthstone-collection-changes-YYYYMMDD-HHMMSS.csv`.
-- `Изменения: оба` создает оба файла.
-
-JSON изменений содержит:
-
-- `summary` — счетчики изменений карт, пыли, рубашек, любимой рубашки, любимых героев, статистики и профиля.
-- `cards` — только карты, у которых изменились количества, с `changeType`, `previous`, `current`, `delta`.
-- `dust`, `cardBacks`, `favoriteCardBack`, `favoriteHeroes`, `playerRecords`, `user` — только измененные секции профиля.
-
-Блок baseline в UI умеет:
-
-- `Текущая база` — сохранить текущую коллекцию как baseline без создания файла для загрузки.
-- `Импорт JSON` — импортировать старый полный JSON экспорт как baseline.
-- `Очистить` — удалить сохраненные baseline-файлы.
-
-Если baseline еще нет, экспорт изменений теперь создает baseline из текущей коллекции вместо ошибки. После успешного экспорта изменений baseline обновляется до текущей коллекции. Следующий экспорт изменений будет содержать только более новые изменения.
-
-## Privacy / Приватность
-
-The JSON export includes user-identifying fields:
-
-- `battleTag`
-- `accountHi`
-- `accountLo`
-
-JSON экспорт содержит идентификаторы пользователя:
-
-- `battleTag`
-- `accountHi`
-- `accountLo`
-
-This is intentional for upload/import workflows, but any website accepting the file should clearly tell users what is being uploaded.
-
-Это сделано намеренно для сценария загрузки/импорта, но сайт, принимающий файл, должен явно сообщать пользователю, какие данные загружаются.
-
-## Build / Сборка
+## Build
 
 Requirements:
 
 - Windows
-- Visual Studio 2022 Build Tools or Visual Studio
 - Hearthstone Deck Tracker installed
+- Visual Studio 2022 Build Tools or Visual Studio
 - Recommended: .NET Framework 4.7.2 Developer Pack / targeting pack
 
 Build from the repository root:
@@ -160,60 +125,17 @@ Build from the repository root:
 .\build.ps1
 ```
 
-If HDT is installed in a custom location:
-
-```powershell
-.\build.ps1 -HDTInstallDir "C:\Users\<you>\AppData\Local\HearthstoneDeckTracker\app-1.52.14"
-```
-
-Output DLL:
+Build output:
 
 ```text
 src\HdtCollectionExporter\bin\x86\Release\HdtCollectionExporter.dll
 ```
 
-The build script includes a local fallback compiler path for machines without the .NET Framework 4.7.2 targeting pack. Installing the targeting pack is still the cleaner build setup.
-
-## Install / Установка
-
-Short version:
-
-1. Build the plugin.
-2. Open HDT.
-3. Go to `Options > Tracker > Plugins`.
-4. Click `Plugins Folder`.
-5. Copy only this file into the plugins folder:
-
-```text
-HdtCollectionExporter.dll
-```
-
-Do not copy `.sln`, `.csproj`, source files, `bin`, or `obj`.
-
-Подробные инструкции:
-
-- [English install guide](docs/INSTALL.en.md)
-- [Русский гайд по установке](docs/INSTALL.ru.md)
-
-## Use / Использование
-
-1. Start Hearthstone and log in.
-2. Start or restart HDT.
-3. Enable either `Collection Exporter by Manacost` or `Экспорт коллекции от Manacost` in HDT plugin settings.
-4. Open the plugin from HDT's `Plugins` menu.
-5. Choose an output folder.
-6. Click `Export JSON`, `Export CSV`, `Export Both`, `Changes JSON`, `Changes CSV`, or `Changes Both`.
-
-Default output folder:
-
-```text
-Documents\HDT Collection Exports
-```
-
-## Project Structure / Структура проекта
+## Project Structure
 
 ```text
 src/HdtCollectionExporter/
+  Assets/manacost_logo.jpg           Manacost banner/logo used in the UI and README
   HdtCollectionExporterPlugin.cs     HDT plugin entry points
   Services/HdtCollectionProvider.cs  Reads HDT collection data
   Services/CollectionExportService.cs Writes full and changes JSON/CSV
@@ -227,15 +149,12 @@ samples/
   sample-collection.csv
   sample-collection-changes.json
   sample-collection-changes.csv
-
-docs/
-  INSTALL.en.md
-  INSTALL.ru.md
 ```
 
-## Reference Repositories / Reference-репозитории
+## Reference Repositories
 
+- [HearthSim/Hearthstone-Deck-Tracker](https://github.com/HearthSim/Hearthstone-Deck-Tracker): target application and HDT plugin/runtime API.
 - [Hearthstone-Collection-Tracker](https://github.com/ko-vasilev/Hearthstone-Collection-Tracker): reference for HDT plugin structure and collection-oriented plugin UI.
 - [Hearthstone_Card_Export](https://github.com/Phoenixy/Hearthstone_Card_Export): reference for export flow and CSV behavior.
 
-The implementation here is separate code. Current collection access uses HDT's `CollectionHelpers.Hearthstone.GetCollection()` rather than direct manual process-memory access.
+The implementation here is separate code. Current collection access uses HDT's `CollectionHelpers.Hearthstone.GetCollection()` rather than OCR, network calls, or manual process-memory reading.

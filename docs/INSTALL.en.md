@@ -1,15 +1,25 @@
 # Installation Guide
 
-This guide explains how to build and install HDT Collection Exporter by Manacost into Hearthstone Deck Tracker.
+This guide explains how to install HDT Collection Exporter by Manacost, a plugin for [HearthSim/Hearthstone-Deck-Tracker](https://github.com/HearthSim/Hearthstone-Deck-Tracker).
 
 ## 1. Requirements
 
 - Windows
 - Hearthstone Deck Tracker installed
-- Visual Studio 2022 Build Tools or Visual Studio
-- Recommended: .NET Framework 4.7.2 Developer Pack / targeting pack
 
-## 2. Build The Plugin
+## 2. Download The Release
+
+Open the latest release and download:
+
+```text
+HdtCollectionExporter.dll
+```
+
+[Latest Release](https://github.com/Zulut30/HdtCollectionExporter/releases/latest)
+
+## 3. Build From Source, Optional
+
+If you want to build the plugin yourself, install Visual Studio 2022 Build Tools or Visual Studio, then run:
 
 Open PowerShell in the repository root and run:
 
@@ -29,7 +39,7 @@ The build output is:
 src\HdtCollectionExporter\bin\x86\Release\HdtCollectionExporter.dll
 ```
 
-## 3. Open The HDT Plugins Folder
+## 4. Open The HDT Plugins Folder
 
 In Hearthstone Deck Tracker:
 
@@ -44,7 +54,7 @@ This usually opens:
 %AppData%\HearthstoneDeckTracker\Plugins
 ```
 
-## 4. Copy The Correct File
+## 5. Copy The Correct File
 
 Copy only:
 
@@ -61,13 +71,13 @@ Do not copy:
 
 HDT loads `.dll` plugin files only.
 
-## 5. Restart HDT
+## 6. Restart HDT
 
 Fully close HDT, including the tray icon near the clock, then start HDT again.
 
 If HDT was already running while you copied the DLL, restart is important because HDT may keep the old DLL loaded.
 
-## 6. Enable The Plugin
+## 7. Enable The Plugin
 
 In `Options > Tracker > Plugins`, enable either:
 
@@ -76,7 +86,7 @@ In `Options > Tracker > Plugins`, enable either:
 
 Both entries use the same export logic. The second one has Russian UI text.
 
-## 7. Export Files
+## 8. Export Files
 
 Start Hearthstone, log in, and wait for HDT to read the collection.
 

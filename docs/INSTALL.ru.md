@@ -1,15 +1,25 @@
 # Гайд по установке
 
-Этот гайд объясняет, как собрать и установить HDT Collection Exporter by Manacost в Hearthstone Deck Tracker.
+Этот гайд объясняет, как установить HDT Collection Exporter by Manacost — плагин для [HearthSim/Hearthstone-Deck-Tracker](https://github.com/HearthSim/Hearthstone-Deck-Tracker).
 
 ## 1. Требования
 
 - Windows
 - Установленный Hearthstone Deck Tracker
-- Visual Studio 2022 Build Tools или Visual Studio
-- Желательно: .NET Framework 4.7.2 Developer Pack / targeting pack
 
-## 2. Сборка плагина
+## 2. Скачать Release
+
+Открой последний релиз и скачай:
+
+```text
+HdtCollectionExporter.dll
+```
+
+[Latest Release](https://github.com/Zulut30/HdtCollectionExporter/releases/latest)
+
+## 3. Сборка из исходников, опционально
+
+Если хочешь собрать плагин сам, установи Visual Studio 2022 Build Tools или Visual Studio, затем запусти:
 
 Открой PowerShell в корне репозитория и запусти:
 
@@ -29,7 +39,7 @@
 src\HdtCollectionExporter\bin\x86\Release\HdtCollectionExporter.dll
 ```
 
-## 3. Открыть папку расширений HDT
+## 4. Открыть папку расширений HDT
 
 В Hearthstone Deck Tracker:
 
@@ -44,7 +54,7 @@ src\HdtCollectionExporter\bin\x86\Release\HdtCollectionExporter.dll
 %AppData%\HearthstoneDeckTracker\Plugins
 ```
 
-## 4. Скопировать правильный файл
+## 5. Скопировать правильный файл
 
 Скопируй только:
 
@@ -61,13 +71,13 @@ HdtCollectionExporter.dll
 
 HDT загружает только `.dll` файлы плагинов.
 
-## 5. Перезапустить HDT
+## 6. Перезапустить HDT
 
 Полностью закрой HDT, включая иконку возле часов, затем запусти HDT снова.
 
 Если HDT был открыт во время копирования DLL, перезапуск обязателен: HDT может держать старую DLL загруженной.
 
-## 6. Включить плагин
+## 7. Включить плагин
 
 В `Настройки > Трекер > Расширения` включи один из вариантов:
 
@@ -76,7 +86,7 @@ HDT загружает только `.dll` файлы плагинов.
 
 Оба пункта используют один и тот же экспорт. Второй вариант имеет русские тексты интерфейса.
 
-## 7. Экспорт файлов
+## 8. Экспорт файлов
 
 Запусти Hearthstone, войди в аккаунт и подожди, пока HDT прочитает коллекцию.
 
