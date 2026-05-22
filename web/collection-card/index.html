@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Карточка коллекции Manacost</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="styles.css?v=quality-1" />
+    <link rel="stylesheet" href="styles.css?v=quality-2" />
   </head>
   <body>
     <main class="app-shell">
@@ -199,7 +199,12 @@
             <p id="modalSetSubtitle">Обычные копии отмечены тёмным счётчиком, золотые — жёлтым.</p>
           </div>
           <div class="modal-actions">
-            <strong id="modalSetStats">0 карт</strong>
+            <div id="modalSetStats" class="modal-stat-grid" aria-label="Статистика карт дополнения"></div>
+            <div id="modalSortControls" class="sort-control" aria-label="Сортировка карт">
+              <button type="button" data-sort="owned" class="is-active">Коллекция</button>
+              <button type="button" data-sort="mana">Мана</button>
+              <button type="button" data-sort="rarity">Редкость</button>
+            </div>
             <button id="modalCloseButton" class="icon-button" type="button" aria-label="Закрыть окно">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M6 6l12 12M18 6 6 18" />
@@ -228,6 +233,6 @@
       </section>
     </div>
 
-    <script src="app.js?v=quality-1"></script>
+    <script src="app.js?v=quality-2"></script>
   </body>
 </html>

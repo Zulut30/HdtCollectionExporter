@@ -1014,13 +1014,92 @@ img {
 .modal-actions {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
-.modal-actions strong {
+.modal-stat-grid {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 7px;
+}
+
+.modal-stat {
+  display: grid;
+  min-width: 72px;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid rgba(244, 242, 232, 0.13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055);
+}
+
+.modal-stat small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.modal-stat strong {
   color: #f5e6b0;
   font-size: 13px;
+  line-height: 1.1;
   white-space: nowrap;
+}
+
+.modal-stat.is-golden strong {
+  color: #ffd777;
+}
+
+.modal-stat.is-missing strong {
+  color: #9ba59d;
+}
+
+.sort-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(244, 242, 232, 0.13);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.sort-control button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.sort-control button:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.sort-control button.is-active {
+  color: #211507;
+  background: linear-gradient(180deg, #ffe1a3, #d69a35);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.24);
+}
+
+.sort-control button:focus-visible {
+  outline: 2px solid rgba(225, 191, 105, 0.72);
+  outline-offset: 2px;
 }
 
 .icon-button {
@@ -1111,34 +1190,82 @@ img {
   opacity: 0.48;
 }
 
+.mana-chip {
+  position: absolute;
+  top: 5%;
+  left: 11%;
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid rgba(138, 204, 255, 0.55);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.9), transparent 23%),
+    linear-gradient(180deg, #75d4ff, #1c6dca 64%, #12417d);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 950;
+  line-height: 1;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  box-shadow:
+    0 10px 20px rgba(0, 0, 0, 0.34),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
 .copy-badges {
   position: absolute;
   top: 5%;
   right: 10%;
   display: inline-flex;
-  gap: 6px;
+  align-items: center;
+  gap: 5px;
   pointer-events: none;
 }
 
 .copy-badge {
-  display: inline-grid;
-  min-width: 30px;
+  display: inline-flex;
+  min-width: 32px;
   height: 30px;
-  place-items: center;
-  padding: 0 8px;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 9px;
   border: 1px solid rgba(244, 242, 232, 0.16);
   border-radius: 999px;
-  background: rgba(7, 10, 9, 0.86);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent),
+    rgba(7, 10, 9, 0.88);
   color: #f0eee3;
   font-size: 12px;
   font-weight: 950;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34);
+  line-height: 1;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.copy-badge-mark {
+  color: rgba(240, 238, 227, 0.72);
+  font-size: 11px;
+  transform: translateY(-0.5px);
+}
+
+.copy-badge-value {
+  font-variant-numeric: tabular-nums;
 }
 
 .copy-badge.is-golden {
   border-color: rgba(255, 220, 127, 0.58);
-  background: linear-gradient(180deg, #ffe0a0, #d6962f);
+  background:
+    radial-gradient(circle at 26% 22%, rgba(255, 255, 255, 0.86), transparent 24%),
+    linear-gradient(180deg, #ffe0a0, #d6962f);
   color: #241607;
+}
+
+.copy-badge.is-golden .copy-badge-mark {
+  color: rgba(73, 42, 6, 0.72);
 }
 
 .copy-badge.is-zero {
@@ -1336,7 +1463,27 @@ img {
 
   .modal-actions {
     width: 100%;
+    align-items: stretch;
     justify-content: space-between;
+  }
+
+  .modal-stat-grid,
+  .sort-control {
+    width: 100%;
+  }
+
+  .modal-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .modal-stat {
+    min-width: 0;
+  }
+
+  .sort-control button {
+    flex: 1;
+    padding: 0 8px;
   }
 
   .modal-card-gallery {
@@ -1345,8 +1492,23 @@ img {
     padding: 20px 10px 28px;
   }
 
+  .mana-chip {
+    left: 7%;
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
   .copy-badges {
     right: 6%;
+    gap: 4px;
+  }
+
+  .copy-badge {
+    min-width: 28px;
+    height: 27px;
+    padding: 0 7px;
+    font-size: 11px;
   }
 
   .lightbox-card {

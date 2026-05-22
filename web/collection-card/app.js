@@ -144,6 +144,7 @@ const elements = {
   modalSetTitle: document.querySelector("#modalSetTitle"),
   modalSetSubtitle: document.querySelector("#modalSetSubtitle"),
   modalSetStats: document.querySelector("#modalSetStats"),
+  modalSortControls: document.querySelector("#modalSortControls"),
   modalCardGallery: document.querySelector("#modalCardGallery"),
   cardLightbox: document.querySelector("#cardLightbox"),
   lightboxScrim: document.querySelector(".lightbox-scrim"),
@@ -161,7 +162,9 @@ let currentCardLookup = null;
 let currentSettings = { ...defaultSettings };
 let currentSelectedSetCode = "";
 let currentModalCards = [];
+let currentModalVisibleCards = [];
 let currentModalSet = null;
+let currentModalSort = "owned";
 
 const emptyProfile = {
   loaded: false,
@@ -223,7 +226,9 @@ elements.resetButton.addEventListener("click", () => {
   currentCardLookup = null;
   currentSelectedSetCode = "";
   currentModalCards = [];
+  currentModalVisibleCards = [];
   currentModalSet = null;
+  currentModalSort = "owned";
   closeCardLightbox();
   closeCollectionModal();
   renderProfile(emptyProfile);
@@ -234,6 +239,16 @@ elements.modalCloseButton.addEventListener("click", closeCollectionModal);
 elements.modalScrim.addEventListener("click", closeCollectionModal);
 elements.lightboxCloseButton.addEventListener("click", closeCardLightbox);
 elements.lightboxScrim.addEventListener("click", closeCardLightbox);
+elements.modalSortControls.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-sort]");
+  if (!button || !elements.modalSortControls.contains(button)) {
+    return;
+  }
+
+  currentModalSort = button.dataset.sort || "owned";
+  renderModalSortControls();
+  renderModalCardGallery();
+});
 
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") {
@@ -588,6 +603,7 @@ async function fetchCardLookupSource(url) {
       name: String(card.name || "").trim(),
       rarity: normalizeRarity(card.rarity),
       set: String(card.set || "").trim(),
+      cost: number(card.cost),
       dust: Array.isArray(card.dust) ? card.dust.map(number) : null,
     };
 
@@ -773,6 +789,7 @@ function buildSelectedSetCards(cards, cardLookup, settings, setCode) {
         name: cardDisplayName(card, null),
         rarity: normalizeRarity(card.rarity),
         set: String(card.set || "").trim(),
+        cost: number(card.cost || card.manaCost),
       })
       .filter((meta) => meta.id && lookupCodes.has(String(meta.set || "").trim().toUpperCase()));
 
@@ -784,6 +801,7 @@ function buildSelectedSetCards(cards, cardLookup, settings, setCode) {
         dbfId: number(meta.dbfId),
         name: meta.name || meta.id,
         rarity: normalizeRarity(meta.rarity),
+        cost: number(meta.cost),
         normal: owned.normal || 0,
         owned: owned.owned,
         golden: owned.golden,
@@ -1003,8 +1021,9 @@ function openCollectionModal(profile, setRow, options = {}) {
   const ownedCount = currentModalCards.filter((row) => row.owned > 0).length;
   const goldenCount = currentModalCards.filter((row) => row.golden > 0).length;
   elements.modalSetTitle.textContent = setRow.name;
-  elements.modalSetStats.textContent = `${formatNumber(ownedCount)} из ${formatNumber(currentModalCards.length)} карт`;
-  elements.modalSetSubtitle.textContent = `${formatNumber(setRow.owned)} карт в коллекции · ${formatNumber(goldenCount)} ${pluralRu(goldenCount, "карта", "карты", "карт")} с золотыми копиями`;
+  renderModalStats(ownedCount, currentModalCards.length, goldenCount);
+  elements.modalSetSubtitle.textContent = `${formatNumber(setRow.owned)} карт в коллекции · ${formatNumber(goldenCount)} ${pluralRu(goldenCount, "карта", "карты", "карт")} с золотыми копиями · сортировка по мане и редкости`;
+  renderModalSortControls();
   renderModalCardGallery();
 
   elements.collectionModal.classList.add("is-open");
@@ -1037,10 +1056,49 @@ function refreshOpenCollectionModal(profile) {
   openCollectionModal(profile, freshSet, { preserveFocus: true });
 }
 
+function renderModalStats(ownedCount, totalCount, goldenCount) {
+  const missingCount = Math.max(0, totalCount - ownedCount);
+  elements.modalSetStats.innerHTML = `
+    <span class="modal-stat is-owned"><small>Есть</small><strong>${formatNumber(ownedCount)} / ${formatNumber(totalCount)}</strong></span>
+    <span class="modal-stat is-golden"><small>Золотые</small><strong>${formatNumber(goldenCount)}</strong></span>
+    <span class="modal-stat is-missing"><small>Нет</small><strong>${formatNumber(missingCount)}</strong></span>
+  `;
+}
+
+function renderModalSortControls() {
+  elements.modalSortControls.querySelectorAll("[data-sort]").forEach((button) => {
+    const isActive = button.dataset.sort === currentModalSort;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
+function sortedModalCards() {
+  const rows = [...currentModalCards];
+  return rows.sort((a, b) => {
+    const ownershipOrder = Number(a.owned <= 0) - Number(b.owned <= 0);
+    const manaOrder = number(a.cost) - number(b.cost);
+    const rarityOrder = rarityWeight(b.rarity) - rarityWeight(a.rarity);
+    const nameOrder = a.name.localeCompare(b.name, "ru");
+    const idOrder = a.dbfId - b.dbfId;
+
+    if (currentModalSort === "mana") {
+      return manaOrder || rarityOrder || ownershipOrder || nameOrder || idOrder;
+    }
+
+    if (currentModalSort === "rarity") {
+      return rarityOrder || manaOrder || ownershipOrder || nameOrder || idOrder;
+    }
+
+    return ownershipOrder || rarityOrder || manaOrder || nameOrder || idOrder;
+  });
+}
+
 function renderModalCardGallery() {
   elements.modalCardGallery.replaceChildren();
 
   if (!currentModalCards.length) {
+    currentModalVisibleCards = [];
     const empty = document.createElement("div");
     empty.className = "gallery-empty";
     empty.textContent = "Не удалось найти карты этого дополнения в справочнике.";
@@ -1049,7 +1107,8 @@ function renderModalCardGallery() {
   }
 
   const fragment = document.createDocumentFragment();
-  currentModalCards.forEach((row, index) => {
+  currentModalVisibleCards = sortedModalCards();
+  currentModalVisibleCards.forEach((row, index) => {
     const item = document.createElement("button");
     item.type = "button";
     item.className = `modal-card ${row.owned > 0 ? "is-owned" : "is-missing"}`;
@@ -1058,6 +1117,7 @@ function renderModalCardGallery() {
       : `${row.name}: нет в коллекции`;
     item.innerHTML = `
       <img src="${escapeHtml(cardRemoteImageUrl(row.cardId))}" alt="${escapeHtml(row.name)}" loading="lazy" decoding="async" />
+      <span class="mana-chip" title="Стоимость маны">${formatNumber(row.cost)}</span>
       ${copyBadges(row)}
     `;
     item.addEventListener("click", () => openCardLightbox(index));
@@ -1067,7 +1127,7 @@ function renderModalCardGallery() {
 }
 
 function openCardLightbox(index) {
-  const row = currentModalCards[index];
+  const row = currentModalVisibleCards[index];
   if (!row) {
     return;
   }
@@ -1075,7 +1135,9 @@ function openCardLightbox(index) {
   elements.lightboxImage.src = cardRemoteImageUrl(row.cardId);
   elements.lightboxImage.alt = row.name;
   elements.lightboxTitle.textContent = row.name;
-  elements.lightboxMeta.textContent = row.owned > 0 ? copySummary(row) : "Нет в коллекции";
+  elements.lightboxMeta.textContent = row.owned > 0
+    ? `${copySummary(row)} · ${formatNumber(row.cost)} маны · ${rarityLabel(row.rarity)}`
+    : `Нет в коллекции · ${formatNumber(row.cost)} маны · ${rarityLabel(row.rarity)}`;
   elements.lightboxBadges.innerHTML = copyBadgeItems(row, { showZeroGolden: true });
   elements.cardLightbox.classList.add("is-open");
   elements.cardLightbox.setAttribute("aria-hidden", "false");
@@ -1098,14 +1160,14 @@ function copyBadgeItems(row, options = {}) {
   const badges = [];
 
   if (normal > 0) {
-    badges.push(`<span class="copy-badge" title="Обычные копии">x${formatNumber(normal)}</span>`);
+    badges.push(`<span class="copy-badge is-normal" title="Обычные копии"><span class="copy-badge-mark">×</span><span class="copy-badge-value">${formatNumber(normal)}</span></span>`);
   } else if (row.owned <= 0) {
-    badges.push('<span class="copy-badge is-zero" title="Нет обычных копий">0</span>');
+    badges.push('<span class="copy-badge is-zero" title="Нет обычных копий"><span class="copy-badge-value">0</span></span>');
   }
 
   if (golden > 0 || options.showZeroGolden) {
     const zeroClass = golden > 0 ? "" : " is-zero";
-    badges.push(`<span class="copy-badge is-golden${zeroClass}" title="Золотые копии">${formatNumber(golden)}</span>`);
+    badges.push(`<span class="copy-badge is-golden${zeroClass}" title="Золотые копии"><span class="copy-badge-mark">★</span><span class="copy-badge-value">${formatNumber(golden)}</span></span>`);
   }
 
   return badges.join("");
