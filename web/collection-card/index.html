@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Карточка коллекции Manacost</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="styles.css?v=gallery-1" />
+    <link rel="stylesheet" href="styles.css?v=quality-1" />
   </head>
   <body>
     <main class="app-shell">
@@ -186,17 +186,48 @@
           <strong id="setsSummary">Загрузи JSON-экспорт</strong>
         </div>
         <div id="setBreakdown" class="expansion-list" aria-label="Выбор дополнения"></div>
-        <div class="gallery-heading">
-          <div>
-            <span class="label">Галерея коллекции</span>
-            <h2 id="cardGalleryTitle">Выбери дополнение</h2>
-          </div>
-          <strong id="cardGalleryStats">Загрузи JSON-экспорт</strong>
-        </div>
-        <div id="cardGallery" class="card-gallery"></div>
       </section>
     </main>
 
-    <script src="app.js?v=gallery-1"></script>
+    <div id="collectionModal" class="modal-shell" aria-hidden="true">
+      <button class="modal-scrim" type="button" aria-label="Закрыть окно"></button>
+      <section class="collection-modal" role="dialog" aria-modal="true" aria-labelledby="modalSetTitle">
+        <header class="modal-header">
+          <div>
+            <span class="label">Карты дополнения</span>
+            <h2 id="modalSetTitle">Дополнение</h2>
+            <p id="modalSetSubtitle">Обычные копии отмечены тёмным счётчиком, золотые — жёлтым.</p>
+          </div>
+          <div class="modal-actions">
+            <strong id="modalSetStats">0 карт</strong>
+            <button id="modalCloseButton" class="icon-button" type="button" aria-label="Закрыть окно">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6 6 18" />
+              </svg>
+            </button>
+          </div>
+        </header>
+        <div id="modalCardGallery" class="modal-card-gallery"></div>
+      </section>
+    </div>
+
+    <div id="cardLightbox" class="lightbox-shell" aria-hidden="true">
+      <button class="lightbox-scrim" type="button" aria-label="Закрыть карту"></button>
+      <section class="lightbox-card" role="dialog" aria-modal="true" aria-labelledby="lightboxTitle">
+        <button id="lightboxCloseButton" class="icon-button lightbox-close" type="button" aria-label="Закрыть карту">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18" />
+          </svg>
+        </button>
+        <img id="lightboxImage" src="assets/ui/card.webp" alt="" />
+        <div class="lightbox-info">
+          <h3 id="lightboxTitle">Карта</h3>
+          <p id="lightboxMeta">Нет в коллекции</p>
+          <div id="lightboxBadges" class="copy-badges"></div>
+        </div>
+      </section>
+    </div>
+
+    <script src="app.js?v=quality-1"></script>
   </body>
 </html>

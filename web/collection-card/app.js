@@ -138,9 +138,20 @@ const elements = {
   expensiveCards: document.querySelector("#expensiveCards"),
   setsSummary: document.querySelector("#setsSummary"),
   setBreakdown: document.querySelector("#setBreakdown"),
-  cardGalleryTitle: document.querySelector("#cardGalleryTitle"),
-  cardGalleryStats: document.querySelector("#cardGalleryStats"),
-  cardGallery: document.querySelector("#cardGallery"),
+  collectionModal: document.querySelector("#collectionModal"),
+  modalScrim: document.querySelector(".modal-scrim"),
+  modalCloseButton: document.querySelector("#modalCloseButton"),
+  modalSetTitle: document.querySelector("#modalSetTitle"),
+  modalSetSubtitle: document.querySelector("#modalSetSubtitle"),
+  modalSetStats: document.querySelector("#modalSetStats"),
+  modalCardGallery: document.querySelector("#modalCardGallery"),
+  cardLightbox: document.querySelector("#cardLightbox"),
+  lightboxScrim: document.querySelector(".lightbox-scrim"),
+  lightboxCloseButton: document.querySelector("#lightboxCloseButton"),
+  lightboxImage: document.querySelector("#lightboxImage"),
+  lightboxTitle: document.querySelector("#lightboxTitle"),
+  lightboxMeta: document.querySelector("#lightboxMeta"),
+  lightboxBadges: document.querySelector("#lightboxBadges"),
 };
 
 let currentProfile = null;
@@ -149,6 +160,8 @@ let currentFileName = "";
 let currentCardLookup = null;
 let currentSettings = { ...defaultSettings };
 let currentSelectedSetCode = "";
+let currentModalCards = [];
+let currentModalSet = null;
 
 const emptyProfile = {
   loaded: false,
@@ -209,8 +222,32 @@ elements.resetButton.addEventListener("click", () => {
   currentFileName = "";
   currentCardLookup = null;
   currentSelectedSetCode = "";
+  currentModalCards = [];
+  currentModalSet = null;
+  closeCardLightbox();
+  closeCollectionModal();
   renderProfile(emptyProfile);
   setStatus("Готов к полному JSON-экспорту коллекции.");
+});
+
+elements.modalCloseButton.addEventListener("click", closeCollectionModal);
+elements.modalScrim.addEventListener("click", closeCollectionModal);
+elements.lightboxCloseButton.addEventListener("click", closeCardLightbox);
+elements.lightboxScrim.addEventListener("click", closeCardLightbox);
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") {
+    return;
+  }
+
+  if (elements.cardLightbox.classList.contains("is-open")) {
+    closeCardLightbox();
+    return;
+  }
+
+  if (elements.collectionModal.classList.contains("is-open")) {
+    closeCollectionModal();
+  }
 });
 
 ["dragenter", "dragover"].forEach((eventName) => {
@@ -705,9 +742,12 @@ function buildOwnedCardMap(cards, cardLookup, settings) {
       return;
     }
 
-    const current = byCardId.get(cardId) || { owned: 0, golden: 0 };
-    current.owned += selectedOwnedCount(card, settings);
-    current.golden += selectedGoldenCount(card, settings);
+    const current = byCardId.get(cardId) || { normal: 0, golden: 0, owned: 0 };
+    const normal = selectedNormalCount(card, settings);
+    const golden = selectedGoldenCount(card, settings);
+    current.normal += normal;
+    current.golden += golden;
+    current.owned += normal + selectedPremiumCount(card, settings);
     byCardId.set(cardId, current);
   });
   return byCardId;
@@ -744,6 +784,7 @@ function buildSelectedSetCards(cards, cardLookup, settings, setCode) {
         dbfId: number(meta.dbfId),
         name: meta.name || meta.id,
         rarity: normalizeRarity(meta.rarity),
+        normal: owned.normal || 0,
         owned: owned.owned,
         golden: owned.golden,
       };
@@ -832,7 +873,7 @@ function renderProfile(profile) {
   renderTopSets(profile.topSets);
   renderExpensiveCards(profile.expensiveGoldenCards);
   renderSetBreakdown(profile);
-  renderCardGallery(profile);
+  refreshOpenCollectionModal(profile);
 }
 
 function renderTopClasses(rows) {
@@ -939,68 +980,150 @@ function renderSetBreakdown(profile) {
     item.addEventListener("click", () => {
       currentSelectedSetCode = row.code;
       renderSetBreakdown(profile);
-      renderCardGallery(profile);
+      openCollectionModal(profile, row);
     });
     fragment.appendChild(item);
   });
   elements.setBreakdown.appendChild(fragment);
 }
 
-function renderCardGallery(profile) {
-  elements.cardGallery.replaceChildren();
-
-  if (!profile.loaded) {
-    elements.cardGalleryTitle.textContent = "Выбери дополнение";
-    elements.cardGalleryStats.textContent = "Загрузи JSON-экспорт";
-    const empty = document.createElement("div");
-    empty.className = "gallery-empty";
-    empty.textContent = "После загрузки здесь появятся карты выбранного дополнения.";
-    elements.cardGallery.appendChild(empty);
+function openCollectionModal(profile, setRow, options = {}) {
+  if (!profile.loaded || !setRow) {
     return;
   }
 
-  const selectedSet = profile.setBreakdown.find((row) => row.code === currentSelectedSetCode) || profile.setBreakdown[0];
-  if (!selectedSet) {
-    elements.cardGalleryTitle.textContent = "Нет дополнений";
-    elements.cardGalleryStats.textContent = "0 карт";
-    return;
-  }
-
-  const rows = buildSelectedSetCards(
+  currentModalSet = setRow;
+  currentModalCards = buildSelectedSetCards(
     currentCollectionData.cards || [],
     currentCardLookup,
     currentSettings,
-    selectedSet.code,
+    setRow.code,
   );
-  const ownedCount = rows.filter((row) => row.owned > 0).length;
-  elements.cardGalleryTitle.textContent = selectedSet.name;
-  elements.cardGalleryStats.textContent = `${formatNumber(ownedCount)} из ${formatNumber(rows.length)} карт`;
 
-  if (!rows.length) {
+  const ownedCount = currentModalCards.filter((row) => row.owned > 0).length;
+  const goldenCount = currentModalCards.filter((row) => row.golden > 0).length;
+  elements.modalSetTitle.textContent = setRow.name;
+  elements.modalSetStats.textContent = `${formatNumber(ownedCount)} из ${formatNumber(currentModalCards.length)} карт`;
+  elements.modalSetSubtitle.textContent = `${formatNumber(setRow.owned)} карт в коллекции · ${formatNumber(goldenCount)} ${pluralRu(goldenCount, "карта", "карты", "карт")} с золотыми копиями`;
+  renderModalCardGallery();
+
+  elements.collectionModal.classList.add("is-open");
+  elements.collectionModal.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
+
+  if (!options.preserveFocus) {
+    elements.modalCloseButton.focus({ preventScroll: true });
+  }
+}
+
+function closeCollectionModal() {
+  elements.collectionModal.classList.remove("is-open");
+  elements.collectionModal.setAttribute("aria-hidden", "true");
+  closeCardLightbox();
+  document.body.classList.remove("modal-open");
+}
+
+function refreshOpenCollectionModal(profile) {
+  if (!elements.collectionModal.classList.contains("is-open") || !currentModalSet) {
+    return;
+  }
+
+  const freshSet = profile.setBreakdown.find((row) => row.code === currentModalSet.code);
+  if (!freshSet) {
+    closeCollectionModal();
+    return;
+  }
+
+  openCollectionModal(profile, freshSet, { preserveFocus: true });
+}
+
+function renderModalCardGallery() {
+  elements.modalCardGallery.replaceChildren();
+
+  if (!currentModalCards.length) {
     const empty = document.createElement("div");
     empty.className = "gallery-empty";
     empty.textContent = "Не удалось найти карты этого дополнения в справочнике.";
-    elements.cardGallery.appendChild(empty);
+    elements.modalCardGallery.appendChild(empty);
     return;
   }
 
   const fragment = document.createDocumentFragment();
-  rows.forEach((row) => {
-    const item = document.createElement("figure");
-    item.className = `gallery-card ${row.owned > 0 ? "is-owned" : "is-missing"}`;
+  currentModalCards.forEach((row, index) => {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = `modal-card ${row.owned > 0 ? "is-owned" : "is-missing"}`;
     item.title = row.owned > 0
-      ? `${row.name}: есть ${formatNumber(row.owned)}`
+      ? `${row.name}: ${copySummary(row)}`
       : `${row.name}: нет в коллекции`;
-    const countLabel = row.owned > 0
-      ? `<span class="gallery-count">${formatNumber(row.owned)}</span>`
-      : `<span class="gallery-count">0</span>`;
     item.innerHTML = `
       <img src="${escapeHtml(cardRemoteImageUrl(row.cardId))}" alt="${escapeHtml(row.name)}" loading="lazy" decoding="async" />
-      ${countLabel}
+      ${copyBadges(row)}
     `;
+    item.addEventListener("click", () => openCardLightbox(index));
     fragment.appendChild(item);
   });
-  elements.cardGallery.appendChild(fragment);
+  elements.modalCardGallery.appendChild(fragment);
+}
+
+function openCardLightbox(index) {
+  const row = currentModalCards[index];
+  if (!row) {
+    return;
+  }
+
+  elements.lightboxImage.src = cardRemoteImageUrl(row.cardId);
+  elements.lightboxImage.alt = row.name;
+  elements.lightboxTitle.textContent = row.name;
+  elements.lightboxMeta.textContent = row.owned > 0 ? copySummary(row) : "Нет в коллекции";
+  elements.lightboxBadges.innerHTML = copyBadgeItems(row, { showZeroGolden: true });
+  elements.cardLightbox.classList.add("is-open");
+  elements.cardLightbox.setAttribute("aria-hidden", "false");
+  elements.lightboxCloseButton.focus({ preventScroll: true });
+}
+
+function closeCardLightbox() {
+  elements.cardLightbox.classList.remove("is-open");
+  elements.cardLightbox.setAttribute("aria-hidden", "true");
+}
+
+function copyBadges(row, options = {}) {
+  const badges = copyBadgeItems(row, options);
+  return badges ? `<span class="copy-badges">${badges}</span>` : "";
+}
+
+function copyBadgeItems(row, options = {}) {
+  const normal = number(row.normal);
+  const golden = number(row.golden);
+  const badges = [];
+
+  if (normal > 0) {
+    badges.push(`<span class="copy-badge" title="Обычные копии">x${formatNumber(normal)}</span>`);
+  } else if (row.owned <= 0) {
+    badges.push('<span class="copy-badge is-zero" title="Нет обычных копий">0</span>');
+  }
+
+  if (golden > 0 || options.showZeroGolden) {
+    const zeroClass = golden > 0 ? "" : " is-zero";
+    badges.push(`<span class="copy-badge is-golden${zeroClass}" title="Золотые копии">${formatNumber(golden)}</span>`);
+  }
+
+  return badges.join("");
+}
+
+function copySummary(row) {
+  const normal = number(row.normal);
+  const golden = number(row.golden);
+  const parts = [];
+
+  if (normal > 0) {
+    parts.push(`${formatNumber(normal)} ${pluralRu(normal, "обычная", "обычные", "обычных")}`);
+  }
+  if (golden > 0) {
+    parts.push(`${formatNumber(golden)} ${pluralRu(golden, "золотая", "золотые", "золотых")}`);
+  }
+
+  return parts.length ? parts.join(" · ") : "Нет в коллекции";
 }
 
 function ensureSelectedSet(profile) {
