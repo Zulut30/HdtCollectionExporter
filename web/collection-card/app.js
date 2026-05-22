@@ -614,9 +614,7 @@ async function loadLeaderboard(options = {}) {
     leaderboardProfiles = Array.isArray(result.users) ? result.users : [];
     leaderboardLoaded = true;
     renderLeaderboardRows();
-    elements.leaderboardStatus.textContent = leaderboardProfiles.length
-      ? `${formatNumber(leaderboardProfiles.length)} игроков`
-      : "Пока нет сохранённых профилей";
+    updateLeaderboardStatus();
 
     const hasSelected = leaderboardProfiles.some((profile) => profile.blizzardId === selectedLeaderboardId);
     if (leaderboardProfiles.length && (!selectedLeaderboardId || !hasSelected)) {
@@ -639,7 +637,9 @@ function renderLeaderboardRows() {
 
   if (!leaderboardProfiles.length) {
     const row = document.createElement("tr");
+    row.className = "leaderboard-empty-row";
     const cell = document.createElement("td");
+    cell.className = "leaderboard-empty-cell";
     cell.colSpan = 7;
     cell.textContent = "Сохранённых публичных профилей пока нет.";
     row.appendChild(cell);
@@ -651,7 +651,23 @@ function renderLeaderboardRows() {
   leaderboardProfiles.forEach((record, index) => {
     const profile = record.profile || {};
     const row = document.createElement("tr");
+    const selectProfile = () => selectLeaderboardProfile(record.blizzardId);
     row.classList.toggle("is-selected", record.blizzardId === selectedLeaderboardId);
+    row.tabIndex = 0;
+    row.setAttribute("role", "button");
+    row.setAttribute("aria-selected", record.blizzardId === selectedLeaderboardId ? "true" : "false");
+    row.setAttribute("aria-label", `Открыть коллекцию ${profile.playerName || record.user?.battleTag || "игрока"}`);
+    row.addEventListener("click", (event) => {
+      if (!event.target.closest("button")) {
+        selectProfile();
+      }
+    });
+    row.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        selectProfile();
+      }
+    });
 
     row.appendChild(tableCell(`#${index + 1}`, "leaderboard-rank"));
 
@@ -660,7 +676,10 @@ function renderLeaderboardRows() {
     button.type = "button";
     button.className = "leaderboard-name-button";
     button.textContent = profile.playerName || record.user?.battleTag || "Игрок Hearthstone";
-    button.addEventListener("click", () => selectLeaderboardProfile(record.blizzardId));
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      selectProfile();
+    });
     nameCell.appendChild(button);
     row.appendChild(nameCell);
 
@@ -668,7 +687,7 @@ function renderLeaderboardRows() {
     row.appendChild(tableCell(formatNumber(profile.ownedCards)));
     row.appendChild(tableCell(formatNumber(profile.goldenCards)));
     row.appendChild(tableCell(formatNumber(profile.dust)));
-    row.appendChild(tableCell(formatDate(record.savedAt)));
+    row.appendChild(tableCell(formatShortDate(record.savedAt)));
     fragment.appendChild(row);
   });
 
@@ -706,10 +725,21 @@ async function selectLeaderboardProfile(blizzardId) {
     currentProfile = profile;
     currentSelectedSetCode = "";
     renderLeaderboardProfile(profile, publicRecord);
-    elements.leaderboardStatus.textContent = `${profile.playerName}: ${profile.coverageText}`;
+    updateLeaderboardStatus();
   } catch (error) {
     elements.leaderboardStatus.textContent = error.message;
   }
+}
+
+function updateLeaderboardStatus(message = "") {
+  if (message) {
+    elements.leaderboardStatus.textContent = message;
+    return;
+  }
+
+  elements.leaderboardStatus.textContent = leaderboardProfiles.length
+    ? `${formatNumber(leaderboardProfiles.length)} игроков`
+    : "Пока нет сохранённых профилей";
 }
 
 function renderLeaderboardProfile(profile, record) {
@@ -1650,6 +1680,23 @@ function formatDate(value) {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+  }).format(date);
+}
+
+function formatShortDate(value) {
+  if (!value) {
+    return "-";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
   }).format(date);
 }
 
