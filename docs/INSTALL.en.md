@@ -132,6 +132,16 @@ The baseline tools are:
 
 If there is no baseline yet, changes export creates one from the current collection instead of failing. After a successful changes export, the baseline is updated to the current collection.
 
+## Exported Data
+
+Full JSON schema version: `3`.
+
+JSON includes collection cards, dust, card backs, favorite card back, favorite heroes, raw `playerRecords`, derived `classStats`, `favoriteClass`, `bestClassByWins`, and basic user identifiers exposed by HDT.
+
+`classStats` is derived from `playerRecords`: each non-zero `records[].data` value is treated as a hero DBF ID, resolved through HearthDb, and grouped by `CardClass`. `recordTypes[].type` keeps the raw numeric HDT/Hearthstone record type, usually the game mode bucket.
+
+In CSV, `golden` is the real golden-card count. `ownedTotal` includes normal, golden, diamond, and signature copies. The detailed premium split is available in JSON.
+
 ## Troubleshooting
 
 ### The plugin does not appear

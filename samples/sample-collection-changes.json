@@ -1,7 +1,7 @@
 {
   "exportedAt": "2026-05-22T12:10:00.0000000+02:00",
   "source": "Hearthstone Deck Tracker plugin by Manacost",
-  "version": 2,
+  "version": 3,
   "exportType": "changes",
   "baselineExportedAt": "2026-05-22T12:00:00.0000000+02:00",
   "currentExportedAt": "2026-05-22T12:10:00.0000000+02:00",
@@ -18,6 +18,9 @@
     "favoriteHeroesAdded": 0,
     "favoriteHeroesRemoved": 0,
     "playerRecordChanges": 0,
+    "classStatChanges": 0,
+    "favoriteClassChanged": false,
+    "bestClassByWinsChanged": false,
     "userChanged": false
   },
   "dust": {
@@ -36,6 +39,7 @@
     "removed": []
   },
   "playerRecords": [],
+  "classStats": [],
   "cards": [
     {
       "changeType": "changed",

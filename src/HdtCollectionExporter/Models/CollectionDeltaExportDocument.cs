@@ -44,6 +44,15 @@ namespace HdtCollectionExporter.Models
         [JsonProperty("playerRecords")]
         public IList<PlayerRecordDelta> PlayerRecords { get; set; }
 
+        [JsonProperty("classStats")]
+        public IList<ClassStatDelta> ClassStats { get; set; }
+
+        [JsonProperty("favoriteClass")]
+        public ValueChange<FavoriteClassRecord> FavoriteClass { get; set; }
+
+        [JsonProperty("bestClassByWins")]
+        public ValueChange<FavoriteClassRecord> BestClassByWins { get; set; }
+
         [JsonProperty("cards")]
         public IList<CollectionCardDeltaRecord> Cards { get; set; }
     }
@@ -85,6 +94,15 @@ namespace HdtCollectionExporter.Models
 
         [JsonProperty("playerRecordChanges")]
         public int PlayerRecordChanges { get; set; }
+
+        [JsonProperty("classStatChanges")]
+        public int ClassStatChanges { get; set; }
+
+        [JsonProperty("favoriteClassChanged")]
+        public bool FavoriteClassChanged { get; set; }
+
+        [JsonProperty("bestClassByWinsChanged")]
+        public bool BestClassByWinsChanged { get; set; }
 
         [JsonProperty("userChanged")]
         public bool UserChanged { get; set; }
@@ -178,6 +196,36 @@ namespace HdtCollectionExporter.Models
 
         [JsonProperty("delta")]
         public CollectionCardCountDelta Delta { get; set; }
+    }
+
+    public class ClassStatDelta
+    {
+        [JsonProperty("class")]
+        public string Class { get; set; }
+
+        [JsonProperty("previous")]
+        public ClassStatRecord Previous { get; set; }
+
+        [JsonProperty("current")]
+        public ClassStatRecord Current { get; set; }
+
+        [JsonProperty("delta")]
+        public ClassStatCountDelta Delta { get; set; }
+    }
+
+    public class ClassStatCountDelta
+    {
+        [JsonProperty("wins")]
+        public int Wins { get; set; }
+
+        [JsonProperty("losses")]
+        public int Losses { get; set; }
+
+        [JsonProperty("ties")]
+        public int Ties { get; set; }
+
+        [JsonProperty("games")]
+        public int Games { get; set; }
     }
 
     public class CollectionCardCountDelta

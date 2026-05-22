@@ -72,6 +72,9 @@ namespace HdtCollectionExporter.Services
                 });
             }
 
+            var playerRecords = BuildPlayerRecords(collection.PlayerRecords);
+            var classStats = BuildClassStats(playerRecords);
+
             return new CollectionSnapshot
             {
                 User = new UserProfileRecord
@@ -84,7 +87,10 @@ namespace HdtCollectionExporter.Services
                 CardBacks = collection.CardBacks != null ? collection.CardBacks.ToList() : new List<int>(),
                 FavoriteCardBack = collection.FavoriteCardBack,
                 FavoriteHeroes = BuildFavoriteHeroes(collection.FavoriteHeroes),
-                PlayerRecords = BuildPlayerRecords(collection.PlayerRecords),
+                PlayerRecords = playerRecords,
+                ClassStats = classStats,
+                FavoriteClass = BuildFavoriteClass(classStats, "mostGames"),
+                BestClassByWins = BuildFavoriteClass(classStats, "mostWins"),
                 Cards = cards
                     .OrderBy(x => x.DbfId)
                     .ThenBy(x => x.CardId)
@@ -149,6 +155,85 @@ namespace HdtCollectionExporter.Services
             return result;
         }
 
+        private static List<ClassStatRecord> BuildClassStats(IList<PlayerRecordGroup> playerRecords)
+        {
+            var byClass = new Dictionary<string, ClassStatBuilder>(StringComparer.OrdinalIgnoreCase);
+            if(playerRecords == null)
+                return new List<ClassStatRecord>();
+
+            foreach(var group in playerRecords)
+            {
+                if(group == null || group.Records == null)
+                    continue;
+
+                foreach(var record in group.Records)
+                {
+                    if(record == null || record.Data <= 0)
+                        continue;
+
+                    var className = GetClassFromHeroDbfId(record.Data);
+                    if(string.IsNullOrWhiteSpace(className))
+                        continue;
+
+                    ClassStatBuilder builder;
+                    if(!byClass.TryGetValue(className, out builder))
+                    {
+                        builder = new ClassStatBuilder { Class = className };
+                        byClass[className] = builder;
+                    }
+
+                    builder.Add(group.Type, record);
+                }
+            }
+
+            return byClass.Values
+                .Select(x => x.ToRecord())
+                .OrderByDescending(x => x.Games)
+                .ThenByDescending(x => x.Wins)
+                .ThenBy(x => x.Class)
+                .ToList();
+        }
+
+        private static string GetClassFromHeroDbfId(int dbfId)
+        {
+            var card = Database.GetCardFromDbfId(dbfId, false);
+            if(card == null || card.CardClass == CardClass.INVALID || card.CardClass == CardClass.NEUTRAL)
+                return string.Empty;
+            return card.CardClass.ToString();
+        }
+
+        private static FavoriteClassRecord BuildFavoriteClass(IList<ClassStatRecord> classStats, string reason)
+        {
+            if(classStats == null || classStats.Count == 0)
+                return null;
+
+            var stat = string.Equals(reason, "mostWins", StringComparison.OrdinalIgnoreCase)
+                ? classStats
+                    .OrderByDescending(x => x.Wins)
+                    .ThenByDescending(x => x.Games)
+                    .ThenBy(x => x.Class)
+                    .FirstOrDefault()
+                : classStats
+                    .OrderByDescending(x => x.Games)
+                    .ThenByDescending(x => x.Wins)
+                    .ThenBy(x => x.Class)
+                    .FirstOrDefault();
+
+            if(stat == null)
+                return null;
+
+            return new FavoriteClassRecord
+            {
+                Class = stat.Class,
+                Reason = reason,
+                Wins = stat.Wins,
+                Losses = stat.Losses,
+                Ties = stat.Ties,
+                Games = stat.Games,
+                Winrate = stat.Winrate
+            };
+        }
+
         private static int SafeCount(int[] counts, int index)
         {
             if(counts == null || index < 0 || index >= counts.Length)
@@ -164,6 +249,97 @@ namespace HdtCollectionExporter.Services
                     return value;
             }
             return string.Empty;
+        }
+
+        private class ClassStatBuilder
+        {
+            private readonly Dictionary<int, ClassRecordTypeBuilder> _recordTypes =
+                new Dictionary<int, ClassRecordTypeBuilder>();
+
+            public string Class { get; set; }
+
+            public int Wins { get; private set; }
+
+            public int Losses { get; private set; }
+
+            public int Ties { get; private set; }
+
+            public void Add(int type, PlayerRecordEntry record)
+            {
+                Wins += record.Wins;
+                Losses += record.Losses;
+                Ties += record.Ties;
+
+                ClassRecordTypeBuilder typeBuilder;
+                if(!_recordTypes.TryGetValue(type, out typeBuilder))
+                {
+                    typeBuilder = new ClassRecordTypeBuilder { Type = type };
+                    _recordTypes[type] = typeBuilder;
+                }
+
+                typeBuilder.Add(record);
+            }
+
+            public ClassStatRecord ToRecord()
+            {
+                var games = Wins + Losses + Ties;
+                return new ClassStatRecord
+                {
+                    Class = Class,
+                    Wins = Wins,
+                    Losses = Losses,
+                    Ties = Ties,
+                    Games = games,
+                    Winrate = CalculateWinrate(Wins, games),
+                    RecordTypes = _recordTypes.Values
+                        .Select(x => x.ToRecord())
+                        .OrderByDescending(x => x.Games)
+                        .ThenBy(x => x.Type)
+                        .ToList()
+                };
+            }
+        }
+
+        private class ClassRecordTypeBuilder
+        {
+            private readonly SortedSet<int> _heroDbfIds = new SortedSet<int>();
+
+            public int Type { get; set; }
+
+            public int Wins { get; private set; }
+
+            public int Losses { get; private set; }
+
+            public int Ties { get; private set; }
+
+            public void Add(PlayerRecordEntry record)
+            {
+                Wins += record.Wins;
+                Losses += record.Losses;
+                Ties += record.Ties;
+                _heroDbfIds.Add(record.Data);
+            }
+
+            public ClassRecordTypeStat ToRecord()
+            {
+                var games = Wins + Losses + Ties;
+                return new ClassRecordTypeStat
+                {
+                    Type = Type,
+                    Wins = Wins,
+                    Losses = Losses,
+                    Ties = Ties,
+                    Games = games,
+                    HeroDbfIds = _heroDbfIds.ToList()
+                };
+            }
+        }
+
+        private static double CalculateWinrate(int wins, int games)
+        {
+            if(games <= 0)
+                return 0;
+            return Math.Round((double)wins / games, 4);
         }
     }
 }

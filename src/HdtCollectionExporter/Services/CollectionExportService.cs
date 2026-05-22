@@ -14,7 +14,7 @@ namespace HdtCollectionExporter.Services
     public class CollectionExportService
     {
         private const string ExportSource = "Hearthstone Deck Tracker plugin by Manacost";
-        private const int ExportVersion = 2;
+        private const int ExportVersion = 3;
         private readonly ICollectionProvider _collectionProvider;
         private readonly string _baselineSnapshotPath;
         private readonly IList<string> _baselineCandidatePaths;
@@ -218,6 +218,9 @@ namespace HdtCollectionExporter.Services
                 FavoriteCardBack = snapshot.FavoriteCardBack,
                 FavoriteHeroes = snapshot.FavoriteHeroes ?? new List<FavoriteHeroRecord>(),
                 PlayerRecords = snapshot.PlayerRecords ?? new List<PlayerRecordGroup>(),
+                ClassStats = snapshot.ClassStats ?? new List<ClassStatRecord>(),
+                FavoriteClass = snapshot.FavoriteClass,
+                BestClassByWins = snapshot.BestClassByWins,
                 Cards = snapshot.Cards
                     .Select(ToJsonRecord)
                     .OrderBy(card => card.DbfId)
@@ -322,6 +325,7 @@ namespace HdtCollectionExporter.Services
                 document.CardBacks = document.CardBacks ?? new List<int>();
                 document.FavoriteHeroes = document.FavoriteHeroes ?? new List<FavoriteHeroRecord>();
                 document.PlayerRecords = document.PlayerRecords ?? new List<PlayerRecordGroup>();
+                document.ClassStats = document.ClassStats ?? new List<ClassStatRecord>();
                 return document;
             }
             catch
@@ -339,10 +343,17 @@ namespace HdtCollectionExporter.Services
             var cardBackChanges = BuildIntListDelta(previous.CardBacks, current.CardBacks);
             var favoriteHeroChanges = BuildFavoriteHeroesDelta(previous.FavoriteHeroes, current.FavoriteHeroes);
             var playerRecordChanges = BuildPlayerRecordDeltas(previous.PlayerRecords, current.PlayerRecords);
+            var classStatChanges = BuildClassStatDeltas(previous.ClassStats, current.ClassStats);
             var dustChange = previous.Dust == current.Dust ? null : BuildNumericChange(previous.Dust, current.Dust);
             var favoriteCardBackChange = previous.FavoriteCardBack == current.FavoriteCardBack
                 ? null
                 : BuildNumericChange(previous.FavoriteCardBack, current.FavoriteCardBack);
+            var favoriteClassChange = AreFavoriteClassesEqual(previous.FavoriteClass, current.FavoriteClass)
+                ? null
+                : new ValueChange<FavoriteClassRecord> { Previous = previous.FavoriteClass, Current = current.FavoriteClass };
+            var bestClassByWinsChange = AreFavoriteClassesEqual(previous.BestClassByWins, current.BestClassByWins)
+                ? null
+                : new ValueChange<FavoriteClassRecord> { Previous = previous.BestClassByWins, Current = current.BestClassByWins };
             var userChange = AreUsersEqual(previous.User, current.User)
                 ? null
                 : new ValueChange<UserProfileRecord> { Previous = previous.User, Current = current.User };
@@ -360,6 +371,9 @@ namespace HdtCollectionExporter.Services
                 FavoriteHeroesAdded = favoriteHeroChanges.Added.Count,
                 FavoriteHeroesRemoved = favoriteHeroChanges.Removed.Count,
                 PlayerRecordChanges = playerRecordChanges.Count,
+                ClassStatChanges = classStatChanges.Count,
+                FavoriteClassChanged = favoriteClassChange != null,
+                BestClassByWinsChanged = bestClassByWinsChange != null,
                 UserChanged = userChange != null
             };
             summary.TotalChanges = summary.CardChanges +
@@ -370,6 +384,9 @@ namespace HdtCollectionExporter.Services
                                    summary.FavoriteHeroesAdded +
                                    summary.FavoriteHeroesRemoved +
                                    summary.PlayerRecordChanges +
+                                   summary.ClassStatChanges +
+                                   (summary.FavoriteClassChanged ? 1 : 0) +
+                                   (summary.BestClassByWinsChanged ? 1 : 0) +
                                    (summary.UserChanged ? 1 : 0);
 
             return new CollectionDeltaExportDocument
@@ -387,6 +404,9 @@ namespace HdtCollectionExporter.Services
                 FavoriteCardBack = favoriteCardBackChange,
                 FavoriteHeroes = favoriteHeroChanges,
                 PlayerRecords = playerRecordChanges,
+                ClassStats = classStatChanges,
+                FavoriteClass = favoriteClassChange,
+                BestClassByWins = bestClassByWinsChange,
                 Cards = cardChanges
             };
         }
@@ -656,6 +676,97 @@ namespace HdtCollectionExporter.Services
                 .ToList();
         }
 
+        private static List<ClassStatDelta> BuildClassStatDeltas(
+            IList<ClassStatRecord> previousStats,
+            IList<ClassStatRecord> currentStats)
+        {
+            var previous = BuildClassStatLookup(previousStats);
+            var current = BuildClassStatLookup(currentStats);
+            var keys = new HashSet<string>(previous.Keys, StringComparer.OrdinalIgnoreCase);
+            keys.UnionWith(current.Keys);
+
+            var changes = new List<ClassStatDelta>();
+            foreach(var key in keys.OrderBy(x => x))
+            {
+                ClassStatRecord previousStat;
+                ClassStatRecord currentStat;
+                previous.TryGetValue(key, out previousStat);
+                current.TryGetValue(key, out currentStat);
+
+                if(previousStat != null && currentStat != null && AreClassStatsEqual(previousStat, currentStat))
+                    continue;
+
+                var identity = currentStat ?? previousStat;
+                changes.Add(new ClassStatDelta
+                {
+                    Class = identity.Class,
+                    Previous = previousStat,
+                    Current = currentStat,
+                    Delta = BuildClassStatDelta(previousStat, currentStat)
+                });
+            }
+
+            return changes
+                .OrderByDescending(change => Math.Abs(change.Delta.Games))
+                .ThenBy(change => change.Class)
+                .ToList();
+        }
+
+        private static Dictionary<string, ClassStatRecord> BuildClassStatLookup(IList<ClassStatRecord> stats)
+        {
+            var result = new Dictionary<string, ClassStatRecord>(StringComparer.OrdinalIgnoreCase);
+            if(stats == null)
+                return result;
+
+            foreach(var stat in stats)
+            {
+                if(stat == null || string.IsNullOrWhiteSpace(stat.Class))
+                    continue;
+                result[stat.Class] = stat;
+            }
+
+            return result;
+        }
+
+        private static bool AreClassStatsEqual(ClassStatRecord previous, ClassStatRecord current)
+        {
+            return previous.Wins == current.Wins &&
+                   previous.Losses == current.Losses &&
+                   previous.Ties == current.Ties &&
+                   previous.Games == current.Games;
+        }
+
+        private static ClassStatCountDelta BuildClassStatDelta(ClassStatRecord previous, ClassStatRecord current)
+        {
+            return new ClassStatCountDelta
+            {
+                Wins = GetClassWins(current) - GetClassWins(previous),
+                Losses = GetClassLosses(current) - GetClassLosses(previous),
+                Ties = GetClassTies(current) - GetClassTies(previous),
+                Games = GetClassGames(current) - GetClassGames(previous)
+            };
+        }
+
+        private static int GetClassWins(ClassStatRecord stat)
+        {
+            return stat == null ? 0 : stat.Wins;
+        }
+
+        private static int GetClassLosses(ClassStatRecord stat)
+        {
+            return stat == null ? 0 : stat.Losses;
+        }
+
+        private static int GetClassTies(ClassStatRecord stat)
+        {
+            return stat == null ? 0 : stat.Ties;
+        }
+
+        private static int GetClassGames(ClassStatRecord stat)
+        {
+            return stat == null ? 0 : stat.Games;
+        }
+
         private static Dictionary<string, PlayerRecordLookupEntry> BuildPlayerRecordLookup(IList<PlayerRecordGroup> groups)
         {
             var result = new Dictionary<string, PlayerRecordLookupEntry>(StringComparer.OrdinalIgnoreCase);
@@ -741,6 +852,20 @@ namespace HdtCollectionExporter.Services
                    previous.AccountLo == current.AccountLo;
         }
 
+        private static bool AreFavoriteClassesEqual(FavoriteClassRecord previous, FavoriteClassRecord current)
+        {
+            if(previous == null && current == null)
+                return true;
+            if(previous == null || current == null)
+                return false;
+            return string.Equals(previous.Class ?? string.Empty, current.Class ?? string.Empty, StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(previous.Reason ?? string.Empty, current.Reason ?? string.Empty, StringComparison.OrdinalIgnoreCase) &&
+                   previous.Wins == current.Wins &&
+                   previous.Losses == current.Losses &&
+                   previous.Ties == current.Ties &&
+                   previous.Games == current.Games;
+        }
+
         private static void WriteCsv(string path, IList<CollectionCardRecordJson> cards)
         {
             var lines = new List<string> { "cardId,dbfId,name,set,rarity,class,normal,golden,ownedTotal" };
@@ -755,7 +880,7 @@ namespace HdtCollectionExporter.Services
                     EscapeCsv(card.Rarity),
                     EscapeCsv(card.Class),
                     EscapeCsv(card.Normal.ToString(CultureInfo.InvariantCulture)),
-                    EscapeCsv(card.PremiumTotal.ToString(CultureInfo.InvariantCulture)),
+                    EscapeCsv(card.Golden.ToString(CultureInfo.InvariantCulture)),
                     EscapeCsv(card.OwnedTotal.ToString(CultureInfo.InvariantCulture))
                 }));
             }
@@ -782,13 +907,13 @@ namespace HdtCollectionExporter.Services
                     EscapeCsv(change.Rarity),
                     EscapeCsv(change.Class),
                     EscapeCsv(change.Delta.Normal.ToString(CultureInfo.InvariantCulture)),
-                    EscapeCsv(change.Delta.PremiumTotal.ToString(CultureInfo.InvariantCulture)),
+                    EscapeCsv(change.Delta.Golden.ToString(CultureInfo.InvariantCulture)),
                     EscapeCsv(change.Delta.OwnedTotal.ToString(CultureInfo.InvariantCulture)),
                     EscapeCsv(GetCurrentNormal(change.Previous).ToString(CultureInfo.InvariantCulture)),
-                    EscapeCsv(GetCurrentPremiumTotal(change.Previous).ToString(CultureInfo.InvariantCulture)),
+                    EscapeCsv(GetCurrentGolden(change.Previous).ToString(CultureInfo.InvariantCulture)),
                     EscapeCsv(GetCurrentOwnedTotal(change.Previous).ToString(CultureInfo.InvariantCulture)),
                     EscapeCsv(GetCurrentNormal(change.Current).ToString(CultureInfo.InvariantCulture)),
-                    EscapeCsv(GetCurrentPremiumTotal(change.Current).ToString(CultureInfo.InvariantCulture)),
+                    EscapeCsv(GetCurrentGolden(change.Current).ToString(CultureInfo.InvariantCulture)),
                     EscapeCsv(GetCurrentOwnedTotal(change.Current).ToString(CultureInfo.InvariantCulture))
                 }));
             }

@@ -17,6 +17,12 @@ namespace HdtCollectionExporter.Models
 
         public IList<PlayerRecordGroup> PlayerRecords { get; set; }
 
+        public IList<ClassStatRecord> ClassStats { get; set; }
+
+        public FavoriteClassRecord FavoriteClass { get; set; }
+
+        public FavoriteClassRecord BestClassByWins { get; set; }
+
         public IReadOnlyList<CollectionCardRecord> Cards { get; set; }
     }
 
@@ -72,5 +78,74 @@ namespace HdtCollectionExporter.Models
 
         [JsonProperty("ties")]
         public int Ties { get; set; }
+    }
+
+    public class ClassStatRecord
+    {
+        [JsonProperty("class")]
+        public string Class { get; set; }
+
+        [JsonProperty("wins")]
+        public int Wins { get; set; }
+
+        [JsonProperty("losses")]
+        public int Losses { get; set; }
+
+        [JsonProperty("ties")]
+        public int Ties { get; set; }
+
+        [JsonProperty("games")]
+        public int Games { get; set; }
+
+        [JsonProperty("winrate")]
+        public double Winrate { get; set; }
+
+        [JsonProperty("recordTypes")]
+        public IList<ClassRecordTypeStat> RecordTypes { get; set; }
+    }
+
+    public class ClassRecordTypeStat
+    {
+        [JsonProperty("type")]
+        public int Type { get; set; }
+
+        [JsonProperty("wins")]
+        public int Wins { get; set; }
+
+        [JsonProperty("losses")]
+        public int Losses { get; set; }
+
+        [JsonProperty("ties")]
+        public int Ties { get; set; }
+
+        [JsonProperty("games")]
+        public int Games { get; set; }
+
+        [JsonProperty("heroDbfIds")]
+        public IList<int> HeroDbfIds { get; set; }
+    }
+
+    public class FavoriteClassRecord
+    {
+        [JsonProperty("class")]
+        public string Class { get; set; }
+
+        [JsonProperty("reason")]
+        public string Reason { get; set; }
+
+        [JsonProperty("wins")]
+        public int Wins { get; set; }
+
+        [JsonProperty("losses")]
+        public int Losses { get; set; }
+
+        [JsonProperty("ties")]
+        public int Ties { get; set; }
+
+        [JsonProperty("games")]
+        public int Games { get; set; }
+
+        [JsonProperty("winrate")]
+        public double Winrate { get; set; }
     }
 }

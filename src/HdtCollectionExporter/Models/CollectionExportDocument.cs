@@ -32,6 +32,15 @@ namespace HdtCollectionExporter.Models
         [JsonProperty("playerRecords")]
         public IList<PlayerRecordGroup> PlayerRecords { get; set; }
 
+        [JsonProperty("classStats")]
+        public IList<ClassStatRecord> ClassStats { get; set; }
+
+        [JsonProperty("favoriteClass")]
+        public FavoriteClassRecord FavoriteClass { get; set; }
+
+        [JsonProperty("bestClassByWins")]
+        public FavoriteClassRecord BestClassByWins { get; set; }
+
         [JsonProperty("cards")]
         public IList<CollectionCardRecordJson> Cards { get; set; }
     }

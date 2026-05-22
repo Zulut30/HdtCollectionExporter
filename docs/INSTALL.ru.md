@@ -144,7 +144,12 @@ JSON содержит:
 - `favoriteCardBack`
 - `favoriteHeroes`
 - `playerRecords`
+- `classStats`
+- `favoriteClass`
+- `bestClassByWins`
 - `cards`
+
+`classStats` строится из `playerRecords`: каждое ненулевое значение `records[].data` считается hero DBF ID, резолвится через HearthDb и группируется по `CardClass`. `recordTypes[].type` сохраняет сырой числовой тип записи HDT/Hearthstone, обычно это bucket игрового режима. `favoriteClass` показывает класс с наибольшим количеством записанных игр.
 
 CSV содержит фиксированные колонки:
 
@@ -152,7 +157,7 @@ CSV содержит фиксированные колонки:
 cardId,dbfId,name,set,rarity,class,normal,golden,ownedTotal
 ```
 
-В CSV колонка `golden` — это общий premium count: золотые + diamond + signature. В JSON эти значения есть отдельно.
+В CSV колонка `golden` — это реальное количество золотых копий. `ownedTotal` включает обычные, золотые, diamond и signature копии. Подробный premium-разбив есть в JSON.
 
 ## Частые проблемы
 

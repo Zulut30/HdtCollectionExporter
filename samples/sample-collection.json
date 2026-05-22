@@ -1,7 +1,7 @@
 {
   "exportedAt": "2026-05-22T12:00:00.0000000+02:00",
   "source": "Hearthstone Deck Tracker plugin by Manacost",
-  "version": 2,
+  "version": 3,
   "user": {
     "battleTag": "Example#1234",
     "accountHi": 123456789,
@@ -28,7 +28,7 @@
       "type": 1,
       "records": [
         {
-          "data": 2,
+          "data": 274,
           "wins": 10,
           "losses": 4,
           "ties": 0
@@ -36,6 +36,46 @@
       ]
     }
   ],
+  "classStats": [
+    {
+      "class": "DRUID",
+      "wins": 10,
+      "losses": 4,
+      "ties": 0,
+      "games": 14,
+      "winrate": 0.7143,
+      "recordTypes": [
+        {
+          "type": 1,
+          "wins": 10,
+          "losses": 4,
+          "ties": 0,
+          "games": 14,
+          "heroDbfIds": [
+            274
+          ]
+        }
+      ]
+    }
+  ],
+  "favoriteClass": {
+    "class": "DRUID",
+    "reason": "mostGames",
+    "wins": 10,
+    "losses": 4,
+    "ties": 0,
+    "games": 14,
+    "winrate": 0.7143
+  },
+  "bestClassByWins": {
+    "class": "DRUID",
+    "reason": "mostWins",
+    "wins": 10,
+    "losses": 4,
+    "ties": 0,
+    "games": 14,
+    "winrate": 0.7143
+  },
   "cards": [
     {
       "cardId": "CORE_EX1_169",

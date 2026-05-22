@@ -37,7 +37,7 @@ No network requests are made by the plugin during export.
 - Full collection export to UTF-8 CSV.
 - Changes-only export to JSON or CSV using a local baseline.
 - Local baseline controls: set current, import old full JSON, clear baseline.
-- Exports collection cards, dust, card backs, favorite card back, favorite heroes, player records, and basic user identifiers exposed by HDT.
+- Exports collection cards, dust, card backs, favorite card back, favorite heroes, raw player records, derived class stats, and basic user identifiers exposed by HDT.
 - English and Russian plugin entries in one DLL.
 - Manacost-branded WPF export window.
 
@@ -75,7 +75,7 @@ More details:
 
 ## Exported Data
 
-Full JSON export schema version: `2`.
+Full JSON export schema version: `3`.
 
 Top-level JSON fields:
 
@@ -88,7 +88,12 @@ Top-level JSON fields:
 - `favoriteCardBack`
 - `favoriteHeroes`
 - `playerRecords`
+- `classStats`
+- `favoriteClass`
+- `bestClassByWins`
 - `cards`
+
+`classStats` is derived from HDT `playerRecords`: the plugin treats each non-zero `playerRecords.records[].data` value as a hero DBF ID, resolves it through HearthDb, and aggregates wins/losses/ties by `CardClass`. `recordTypes[].type` keeps the raw numeric HDT/Hearthstone record type, which is usually the game mode bucket. `favoriteClass` is the class with the most recorded games across the exported record buckets; `bestClassByWins` is the class with the most wins.
 
 Full CSV keeps this stable header:
 
@@ -96,7 +101,7 @@ Full CSV keeps this stable header:
 cardId,dbfId,name,set,rarity,class,normal,golden,ownedTotal
 ```
 
-In CSV, `golden` is the total premium count: golden + diamond + signature. The detailed split is available in JSON.
+In CSV, `golden` is the real golden-card count. `ownedTotal` includes normal, golden, diamond, and signature copies. The detailed premium split is available in JSON.
 
 ## Changes Export
 

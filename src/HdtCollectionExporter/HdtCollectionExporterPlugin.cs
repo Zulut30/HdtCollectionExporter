@@ -38,7 +38,7 @@ namespace HdtCollectionExporter
 
         public Version Version
         {
-            get { return new Version(1, 2, 1); }
+            get { return new Version(1, 3, 0); }
         }
 
         public MenuItem MenuItem
@@ -150,7 +150,7 @@ namespace HdtCollectionExporter
 
         public Version Version
         {
-            get { return new Version(1, 2, 1); }
+            get { return new Version(1, 3, 0); }
         }
 
         public MenuItem MenuItem
