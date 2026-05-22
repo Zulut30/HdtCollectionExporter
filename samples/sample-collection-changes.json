@@ -1,0 +1,98 @@
+{
+  "exportedAt": "2026-05-22T12:10:00.0000000+02:00",
+  "source": "Hearthstone Deck Tracker plugin by Manacost",
+  "version": 2,
+  "exportType": "changes",
+  "baselineExportedAt": "2026-05-22T12:00:00.0000000+02:00",
+  "currentExportedAt": "2026-05-22T12:10:00.0000000+02:00",
+  "summary": {
+    "totalChanges": 3,
+    "cardChanges": 1,
+    "cardsAdded": 0,
+    "cardsRemoved": 0,
+    "cardsChanged": 1,
+    "dustChanged": true,
+    "cardBacksAdded": 1,
+    "cardBacksRemoved": 0,
+    "favoriteCardBackChanged": false,
+    "favoriteHeroesAdded": 0,
+    "favoriteHeroesRemoved": 0,
+    "playerRecordChanges": 0,
+    "userChanged": false
+  },
+  "dust": {
+    "previous": 1200,
+    "current": 1160,
+    "delta": -40
+  },
+  "cardBacks": {
+    "added": [
+      3
+    ],
+    "removed": []
+  },
+  "favoriteHeroes": {
+    "added": [],
+    "removed": []
+  },
+  "playerRecords": [],
+  "cards": [
+    {
+      "changeType": "changed",
+      "cardId": "CORE_EX1_169",
+      "dbfId": 169,
+      "name": "Innervate",
+      "set": "CORE",
+      "rarity": "FREE",
+      "class": "DRUID",
+      "previous": {
+        "cardId": "CORE_EX1_169",
+        "dbfId": 169,
+        "name": "Innervate",
+        "set": "CORE",
+        "rarity": "FREE",
+        "class": "DRUID",
+        "normal": 1,
+        "golden": 0,
+        "diamond": 0,
+        "signature": 0,
+        "premiumTotal": 0,
+        "trialNormal": 0,
+        "trialGolden": 0,
+        "trialDiamond": 0,
+        "trialSignature": 0,
+        "ownedTotal": 1
+      },
+      "current": {
+        "cardId": "CORE_EX1_169",
+        "dbfId": 169,
+        "name": "Innervate",
+        "set": "CORE",
+        "rarity": "FREE",
+        "class": "DRUID",
+        "normal": 2,
+        "golden": 0,
+        "diamond": 0,
+        "signature": 0,
+        "premiumTotal": 0,
+        "trialNormal": 0,
+        "trialGolden": 0,
+        "trialDiamond": 0,
+        "trialSignature": 0,
+        "ownedTotal": 2
+      },
+      "delta": {
+        "normal": 1,
+        "golden": 0,
+        "diamond": 0,
+        "signature": 0,
+        "premiumTotal": 0,
+        "trialNormal": 0,
+        "trialGolden": 0,
+        "trialDiamond": 0,
+        "trialSignature": 0,
+        "ownedTotal": 1
+      }
+    }
+  ]
+}

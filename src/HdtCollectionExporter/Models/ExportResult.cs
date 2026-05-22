@@ -14,6 +14,8 @@ namespace HdtCollectionExporter.Models
 
         public int CardCount { get; set; }
 
+        public int ChangeCount { get; set; }
+
         public IList<string> Files { get; private set; }
     }
 }

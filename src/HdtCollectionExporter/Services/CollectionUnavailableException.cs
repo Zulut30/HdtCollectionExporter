@@ -12,4 +12,11 @@ namespace HdtCollectionExporter.Services
         {
         }
     }
+
+    public class NoPreviousExportException : Exception
+    {
+        public NoPreviousExportException(string message) : base(message)
+        {
+        }
+    }
 }

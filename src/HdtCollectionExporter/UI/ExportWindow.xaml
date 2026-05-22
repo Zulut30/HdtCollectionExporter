@@ -156,10 +156,15 @@
                     Content="Export CSV" />
             <Button x:Name="ExportBothButton"
                     MinWidth="140"
+                    Margin="0,0,10,0"
                     Background="#6F2DBD"
                     BorderBrush="#B693E5"
                     Click="ExportBothButton_OnClick"
                     Content="Export Both" />
+            <Button x:Name="ExportChangesButton"
+                    MinWidth="150"
+                    Click="ExportChangesButton_OnClick"
+                    Content="Export Changes" />
         </StackPanel>
 
         <Border Grid.Row="4"

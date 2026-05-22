@@ -61,6 +61,58 @@ In CSV, `golden` is a premium total: `golden + diamond + signature`. The full pr
 
 В CSV колонка `golden` означает общий premium count: золотые + diamond + signature. Полная разбивка доступна в JSON в полях `golden`, `diamond`, `signature`, `premiumTotal`.
 
+## Website Import Compatibility / Совместимость с сайтами
+
+The files are designed to be easy for websites to parse:
+
+- Full JSON has stable top-level fields and arrays. A website can read `version`, then import `cards`, `dust`, `cardBacks`, favorites, and profile data.
+- Full CSV is intentionally flat and keeps the fixed header `cardId,dbfId,name,set,rarity,class,normal,golden,ownedTotal`.
+- Change exports use `exportType: "changes"` and include a `summary` block, so a website can quickly decide whether anything changed before reading all records.
+
+Файлы специально сделаны удобными для сайтов:
+
+- Полный JSON имеет стабильные верхнеуровневые поля и массивы. Сайт читает `version`, затем импортирует `cards`, `dust`, `cardBacks`, избранное и данные профиля.
+- Полный CSV плоский и сохраняет фиксированный заголовок `cardId,dbfId,name,set,rarity,class,normal,golden,ownedTotal`.
+- Экспорт изменений использует `exportType: "changes"` и блок `summary`, поэтому сайт может быстро понять, есть ли изменения, не разбирая весь файл.
+
+## Change Exports / Экспорт изменений
+
+After any full export, the plugin stores a local baseline snapshot inside the HDT plugin data folder. The baseline is not sent anywhere.
+
+Click `Export Changes` to compare the current collection with that baseline. The plugin writes two files:
+
+- `hearthstone-collection-changes-YYYYMMDD-HHMMSS.json`
+- `hearthstone-collection-changes-YYYYMMDD-HHMMSS.csv`
+
+The changes JSON includes:
+
+- `summary` — counters for cards, dust, card backs, favorite card back, favorite heroes, player records, and user profile changes.
+- `cards` — only card records whose counts changed, with `changeType`, `previous`, `current`, and `delta`.
+- `dust`, `cardBacks`, `favoriteCardBack`, `favoriteHeroes`, `playerRecords`, `user` — only changed profile sections.
+
+The changes CSV has this header:
+
+```text
+changeType,cardId,dbfId,name,set,rarity,class,normalDelta,goldenDelta,ownedTotalDelta,previousNormal,previousGolden,previousOwnedTotal,currentNormal,currentGolden,currentOwnedTotal
+```
+
+After `Export Changes` succeeds, the plugin updates the local baseline to the current collection. The next change export will contain only newer changes.
+
+После любого полного экспорта плагин сохраняет локальный baseline-снимок в папке данных HDT-плагина. Этот baseline никуда не отправляется.
+
+Кнопка `Export Changes` / `Экспорт изменений` сравнивает текущую коллекцию с baseline. Плагин создает два файла:
+
+- `hearthstone-collection-changes-YYYYMMDD-HHMMSS.json`
+- `hearthstone-collection-changes-YYYYMMDD-HHMMSS.csv`
+
+JSON изменений содержит:
+
+- `summary` — счетчики изменений карт, пыли, рубашек, любимой рубашки, любимых героев, статистики и профиля.
+- `cards` — только карты, у которых изменились количества, с `changeType`, `previous`, `current`, `delta`.
+- `dust`, `cardBacks`, `favoriteCardBack`, `favoriteHeroes`, `playerRecords`, `user` — только измененные секции профиля.
+
+После успешного `Export Changes` baseline обновляется до текущей коллекции. Следующий экспорт изменений будет содержать только более новые изменения.
+
 ## Privacy / Приватность
 
 The JSON export includes user-identifying fields:
@@ -136,7 +188,7 @@ Do not copy `.sln`, `.csproj`, source files, `bin`, or `obj`.
 3. Enable either `Collection Exporter by Manacost` or `Экспорт коллекции от Manacost` in HDT plugin settings.
 4. Open the plugin from HDT's `Plugins` menu.
 5. Choose an output folder.
-6. Click `Export JSON`, `Export CSV`, or `Export Both`.
+6. Click `Export JSON`, `Export CSV`, `Export Both`, or `Export Changes`.
 
 Default output folder:
 
@@ -150,7 +202,7 @@ Documents\HDT Collection Exports
 src/HdtCollectionExporter/
   HdtCollectionExporterPlugin.cs     HDT plugin entry points
   Services/HdtCollectionProvider.cs  Reads HDT collection data
-  Services/CollectionExportService.cs Writes JSON and CSV
+  Services/CollectionExportService.cs Writes full and changes JSON/CSV
   Settings/PluginSettings.cs         XML settings
   UI/ExportWindow.xaml               WPF export window
   UI/ExportWindowText.cs             English/Russian UI text
@@ -159,6 +211,8 @@ src/HdtCollectionExporter/
 samples/
   sample-collection.json
   sample-collection.csv
+  sample-collection-changes.json
+  sample-collection-changes.csv
 
 docs/
   INSTALL.en.md

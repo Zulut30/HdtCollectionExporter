@@ -94,6 +94,7 @@ $refs = @(
 $sources = @(
     "HdtCollectionExporterPlugin.cs",
     "Models\CollectionCardRecord.cs",
+    "Models\CollectionDeltaExportDocument.cs",
     "Models\CollectionExportDocument.cs",
     "Models\CollectionSnapshot.cs",
     "Models\ExportFormat.cs",

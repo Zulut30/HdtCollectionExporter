@@ -74,6 +74,11 @@ namespace HdtCollectionExporter.UI
             await RunExportAsync(ExportFormat.Both);
         }
 
+        private async void ExportChangesButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            await RunChangesExportAsync();
+        }
+
         protected override void OnClosed(EventArgs e)
         {
             PersistSettingsFromUi();
@@ -99,6 +104,52 @@ namespace HdtCollectionExporter.UI
 
                 SetStatus(_settings.LastStatus);
                 UpdateLastExportText();
+            }
+            catch(CollectionUnavailableException ex)
+            {
+                SetError(ex.Message);
+            }
+            catch(UnauthorizedAccessException ex)
+            {
+                SetError(_text.CannotWrite + ex.Message);
+            }
+            catch(IOException ex)
+            {
+                SetError(_text.FileExportFailed + ex.Message);
+            }
+            catch(Exception ex)
+            {
+                SetError(_text.ExportFailed + ex.Message);
+            }
+            finally
+            {
+                SetBusy(false);
+            }
+        }
+
+        private async Task RunChangesExportAsync()
+        {
+            if(_isExporting)
+                return;
+
+            PersistSettingsFromUi();
+            SetBusy(true);
+            SetStatus(_text.ExportingChanges);
+
+            try
+            {
+                var result = await _exportService.ExportChangesAsync(BuildOptions());
+                _settings.LastExportTimeUtc = result.ExportedAt.UtcDateTime;
+                _settings.LastStatus = _text.ChangesSuccessPrefix + result.ChangeCount + _text.ChangesSuccessMiddle +
+                                       string.Join(", ", result.Files.Select(Path.GetFileName));
+                _saveSettings();
+
+                SetStatus(_settings.LastStatus);
+                UpdateLastExportText();
+            }
+            catch(NoPreviousExportException)
+            {
+                SetError(_text.NoPreviousExport);
             }
             catch(CollectionUnavailableException ex)
             {
@@ -159,6 +210,7 @@ namespace HdtCollectionExporter.UI
             ExportJsonButton.Content = _text.ExportJson;
             ExportCsvButton.Content = _text.ExportCsv;
             ExportBothButton.Content = _text.ExportBoth;
+            ExportChangesButton.Content = _text.ExportChanges;
             StatusLabelTextBlock.Text = _text.Status;
             PrivacyNoteTextBlock.Text = _text.PrivacyNote;
         }
@@ -186,6 +238,7 @@ namespace HdtCollectionExporter.UI
             ExportJsonButton.IsEnabled = !isBusy;
             ExportCsvButton.IsEnabled = !isBusy;
             ExportBothButton.IsEnabled = !isBusy;
+            ExportChangesButton.IsEnabled = !isBusy;
             BrowseButton.IsEnabled = !isBusy;
         }
 

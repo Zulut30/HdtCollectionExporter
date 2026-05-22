@@ -38,7 +38,7 @@ namespace HdtCollectionExporter
 
         public Version Version
         {
-            get { return new Version(1, 1, 1); }
+            get { return new Version(1, 2, 0); }
         }
 
         public MenuItem MenuItem
@@ -56,7 +56,7 @@ namespace HdtCollectionExporter
             Directory.CreateDirectory(PluginDataDir);
 
             _settings = ExporterSettings.Load(PluginDataDir);
-            _exportService = new CollectionExportService(new HdtCollectionProvider());
+            _exportService = new CollectionExportService(new HdtCollectionProvider(), Path.Combine(PluginDataDir, "last-collection-export.json"));
 
             _menuItem = new MenuItem { Header = Name };
             _menuItem.Click += delegate { OpenWindow(); };
@@ -131,7 +131,7 @@ namespace HdtCollectionExporter
 
         public Version Version
         {
-            get { return new Version(1, 1, 1); }
+            get { return new Version(1, 2, 0); }
         }
 
         public MenuItem MenuItem
@@ -149,7 +149,7 @@ namespace HdtCollectionExporter
             Directory.CreateDirectory(PluginDataDir);
 
             _settings = ExporterSettings.Load(PluginDataDir);
-            _exportService = new CollectionExportService(new HdtCollectionProvider());
+            _exportService = new CollectionExportService(new HdtCollectionProvider(), Path.Combine(PluginDataDir, "last-collection-export.json"));
 
             _menuItem = new MenuItem { Header = Name };
             _menuItem.Click += delegate { OpenWindow(); };

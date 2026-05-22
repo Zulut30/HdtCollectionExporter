@@ -97,12 +97,22 @@ Plugins > Экспорт коллекции от Manacost
 - `Export JSON` / `Экспорт JSON`
 - `Export CSV` / `Экспорт CSV`
 - `Export Both` / `Экспортировать оба`
+- `Export Changes` / `Экспорт изменений`
 
 Папка по умолчанию:
 
 ```text
 Документы\HDT Collection Exports
 ```
+
+`Export Changes` работает после хотя бы одного полного экспорта. Плагин сравнивает текущую коллекцию с последним локальным baseline и создает:
+
+```text
+hearthstone-collection-changes-YYYYMMDD-HHMMSS.json
+hearthstone-collection-changes-YYYYMMDD-HHMMSS.csv
+```
+
+После успешного экспорта изменений baseline обновляется до текущей коллекции.
 
 ## Что экспортируется
 
@@ -155,3 +165,7 @@ HdtCollectionExporter.sln
 ```text
 Документы\HDT Collection Exports
 ```
+
+### Export Changes пишет, что предыдущего экспорта нет
+
+Сначала запусти `Export Both` один раз. После этого `Export Changes` будет выгружать только отличия с момента последнего успешного полного экспорта или экспорта изменений.

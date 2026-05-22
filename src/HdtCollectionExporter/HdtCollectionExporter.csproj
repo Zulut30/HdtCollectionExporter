@@ -68,6 +68,7 @@
   <ItemGroup>
     <Compile Include="HdtCollectionExporterPlugin.cs" />
     <Compile Include="Models\CollectionCardRecord.cs" />
+    <Compile Include="Models\CollectionDeltaExportDocument.cs" />
     <Compile Include="Models\CollectionExportDocument.cs" />
     <Compile Include="Models\CollectionSnapshot.cs" />
     <Compile Include="Models\ExportFormat.cs" />
