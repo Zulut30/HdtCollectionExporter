@@ -695,8 +695,7 @@ img {
 }
 
 .class-row,
-.set-row,
-.gold-card-row {
+.set-row {
   display: grid;
   gap: 10px;
 }
@@ -706,8 +705,7 @@ img {
 }
 
 .class-item,
-.set-item,
-.gold-card-item {
+.set-item {
   display: grid;
   align-items: center;
   min-width: 0;
@@ -728,8 +726,7 @@ img {
 }
 
 .class-item strong,
-.set-item strong,
-.gold-card-item strong {
+.set-item strong {
   overflow: hidden;
   font-size: 13px;
   text-overflow: ellipsis;
@@ -737,81 +734,18 @@ img {
 }
 
 .class-item span,
-.set-item span,
-.gold-card-item span {
+.set-item span {
   color: var(--muted);
   font-size: 12px;
 }
 
-.set-row,
-.gold-card-row {
+.set-row {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.set-item,
-.gold-card-item {
+.set-item {
   gap: 4px;
   padding: 11px 12px;
-}
-
-.gold-card-item {
-  position: relative;
-  grid-template-columns: 58px minmax(0, 1fr);
-  gap: 12px;
-  align-items: center;
-  min-height: 108px;
-  overflow: hidden;
-  border: 1px solid rgba(225, 191, 105, 0.2);
-  background:
-    linear-gradient(135deg, rgba(225, 191, 105, 0.18), transparent 42%),
-    rgba(255, 255, 255, 0.055);
-}
-
-.gold-card-item::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(circle at 22% 20%, rgba(255, 223, 136, 0.2), transparent 52%);
-}
-
-.gold-card-art {
-  position: relative;
-  z-index: 1;
-  width: 56px;
-  height: 84px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 225, 144, 0.58);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.3);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
-}
-
-.gold-card-art img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
-}
-
-.gold-card-copy {
-  position: relative;
-  z-index: 1;
-  min-width: 0;
-}
-
-.gold-card-item strong {
-  display: -webkit-box;
-  margin-bottom: 6px;
-  line-height: 1.25;
-  white-space: normal;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-}
-
-.gold-card-item span {
-  display: block;
-  line-height: 1.35;
 }
 
 .action-bar {
@@ -1046,11 +980,6 @@ img {
   line-height: 1;
 }
 
-.legend-mark.is-mana {
-  background: linear-gradient(180deg, #78d7ff, #1a71cf);
-  color: #ffffff;
-}
-
 .legend-mark.is-normal {
   background: rgba(7, 10, 9, 0.9);
   color: #f0eee3;
@@ -1263,26 +1192,6 @@ img {
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-.card-indicator {
-  display: inline-grid;
-  min-width: 28px;
-  height: 28px;
-  place-items: center;
-  border: 1px solid rgba(138, 204, 255, 0.55);
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.9), transparent 23%),
-    linear-gradient(180deg, #75d4ff, #1c6dca 64%, #12417d);
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 950;
-  line-height: 1;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-  box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.24),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.18);
-}
-
 .copy-badges {
   position: absolute;
   top: 5%;
@@ -1490,8 +1399,7 @@ img {
   .hero-line,
   .metric-grid,
   .class-row,
-  .set-row,
-  .gold-card-row {
+  .set-row {
     grid-template-columns: 1fr;
   }
 
@@ -1580,12 +1488,6 @@ img {
   .card-indicator-row {
     gap: 4px;
     padding: 3px 5px;
-  }
-
-  .card-indicator {
-    min-width: 26px;
-    height: 26px;
-    font-size: 12px;
   }
 
   .copy-badges {

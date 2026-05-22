@@ -135,7 +135,6 @@ const elements = {
   coverageBar: document.querySelector("#coverageBar"),
   topClasses: document.querySelector("#topClasses"),
   topSets: document.querySelector("#topSets"),
-  expensiveCards: document.querySelector("#expensiveCards"),
   setsSummary: document.querySelector("#setsSummary"),
   setBreakdown: document.querySelector("#setBreakdown"),
   collectionModal: document.querySelector("#collectionModal"),
@@ -189,9 +188,6 @@ const emptyProfile = {
     { name: "Дополнения", owned: 0 },
     { name: "Золотые", owned: 0 },
     { name: "Пыль", owned: 0 },
-  ],
-  expensiveGoldenCards: [
-    { name: "Золотые карты", caption: "появятся после загрузки" },
   ],
   setBreakdown: [],
   setBreakdownSummary: "Загрузи JSON-экспорт",
@@ -396,7 +392,6 @@ function buildProfile(data, fileName, cardLookup, settings = defaultSettings) {
     coverageText: completionLabel,
     topClasses: classRows.slice(0, 3),
     topSets: setBreakdown.slice(0, 3),
-    expensiveGoldenCards: buildExpensiveGoldenCards(cards, cardLookup, settings),
     setBreakdown,
     setBreakdownSummary: setBreakdown.length
       ? `${formatNumber(setBreakdown.length)} дополнений · ${formatNumber(sum(setBreakdown, (row) => row.owned))} карт`
@@ -603,7 +598,6 @@ async function fetchCardLookupSource(url) {
       name: String(card.name || "").trim(),
       rarity: normalizeRarity(card.rarity),
       set: String(card.set || "").trim(),
-      cost: number(card.cost),
       dust: Array.isArray(card.dust) ? card.dust.map(number) : null,
     };
 
@@ -616,38 +610,6 @@ async function fetchCardLookupSource(url) {
   });
 
   return { byId, byDbf, all: Array.from(byId.values()), count: cards.length };
-}
-
-function buildExpensiveGoldenCards(cards, cardLookup, settings) {
-  return cards
-    .map((card) => {
-      const meta = findCardMeta(card, cardLookup);
-      const golden = selectedGoldenCount(card, settings);
-      const setCode = String(card.set || (meta && meta.set) || "").trim();
-      const rarity = normalizeRarity(card.rarity || (meta && meta.rarity));
-      const cardId = String(card.cardId || card.id || (meta && meta.id) || "").trim();
-      const craftCost = goldenCraftCost(rarity, meta, setCode);
-
-      if (golden <= 0 || isHiddenProfileSet(setCode) || craftCost <= 0) {
-        return null;
-      }
-
-      return {
-        cardId,
-        name: cardDisplayName(card, meta),
-        rarity,
-        golden,
-        craftCost,
-        totalValue: craftCost * golden,
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => (
-      b.totalValue - a.totalValue ||
-      b.craftCost - a.craftCost ||
-      a.name.localeCompare(b.name, "ru")
-    ))
-    .slice(0, 3);
 }
 
 function findCardMeta(card, cardLookup) {
@@ -670,11 +632,6 @@ function findCardMeta(card, cardLookup) {
 
 function cardDisplayName(card, meta) {
   return String((meta && meta.name) || card.name || card.cardId || card.dbfId || "Неизвестная карта").trim();
-}
-
-function cardLocalImagePath(cardId) {
-  const safeId = String(cardId || "").trim();
-  return safeId ? `assets/card_renders/${safeId}.png` : "";
 }
 
 function cardRemoteImageUrl(cardId) {
@@ -720,24 +677,6 @@ function goldenDisenchantValue(rarity, meta, setCode = "") {
     FREE: 0,
   };
   return values[rarity] || 0;
-}
-
-function goldenCraftCost(rarity, meta, setCode = "") {
-  if (meta && Array.isArray(meta.dust) && number(meta.dust[1]) > 0) {
-    return number(meta.dust[1]);
-  }
-  if (isZeroDustCard(rarity, meta, setCode)) {
-    return 0;
-  }
-
-  const costs = {
-    LEGENDARY: 3200,
-    EPIC: 1600,
-    RARE: 800,
-    COMMON: 400,
-    FREE: 0,
-  };
-  return costs[rarity] || 0;
 }
 
 function setLookupCodes(setCode) {
@@ -789,7 +728,6 @@ function buildSelectedSetCards(cards, cardLookup, settings, setCode) {
         name: cardDisplayName(card, null),
         rarity: normalizeRarity(card.rarity),
         set: String(card.set || "").trim(),
-        cost: number(card.cost || card.manaCost),
       })
       .filter((meta) => meta.id && lookupCodes.has(String(meta.set || "").trim().toUpperCase()));
 
@@ -801,7 +739,6 @@ function buildSelectedSetCards(cards, cardLookup, settings, setCode) {
         dbfId: number(meta.dbfId),
         name: meta.name || meta.id,
         rarity: normalizeRarity(meta.rarity),
-        cost: number(meta.cost),
         normal: owned.normal || 0,
         owned: owned.owned,
         golden: owned.golden,
@@ -840,14 +777,6 @@ function rarityLabel(rarity) {
     FREE: "бесплатная",
   };
   return labels[rarity] || "карта";
-}
-
-function goldenCaption(row) {
-  if (row.caption) {
-    return row.caption;
-  }
-
-  return `${rarityLabel(row.rarity)} · ${formatNumber(row.golden)} ${pluralRu(row.golden, "золотая", "золотые", "золотых")} · ${formatNumber(row.totalValue)} пыли`;
 }
 
 function pluralRu(value, one, few, many) {
@@ -889,7 +818,6 @@ function renderProfile(profile) {
   ensureSelectedSet(profile);
   renderTopClasses(profile.topClasses);
   renderTopSets(profile.topSets);
-  renderExpensiveCards(profile.expensiveGoldenCards);
   renderSetBreakdown(profile);
   refreshOpenCollectionModal(profile);
 }
@@ -926,43 +854,6 @@ function renderTopSets(rows) {
     fragment.appendChild(item);
   });
   elements.topSets.appendChild(fragment);
-}
-
-function renderExpensiveCards(rows) {
-  elements.expensiveCards.replaceChildren();
-  const visibleRows = rows && rows.length
-    ? rows
-    : [{ name: "Золотых карт не найдено", caption: "в выбранных дополнениях" }];
-
-  const fragment = document.createDocumentFragment();
-  visibleRows.forEach((row) => {
-    const item = document.createElement("div");
-    item.className = "gold-card-item";
-    const localImage = cardLocalImagePath(row.cardId);
-    const remoteImage = cardRemoteImageUrl(row.cardId);
-    item.innerHTML = `
-      <div class="gold-card-art">
-        ${localImage ? `<img src="${escapeHtml(localImage)}" alt="" loading="lazy" decoding="async" />` : `<img src="assets/ui/card.webp" alt="" loading="lazy" decoding="async" />`}
-      </div>
-      <div class="gold-card-copy">
-        <strong>${escapeHtml(row.name)}</strong>
-        <span>${escapeHtml(goldenCaption(row))}</span>
-      </div>
-    `;
-    const image = item.querySelector("img");
-    if (image && remoteImage) {
-      image.addEventListener("error", () => {
-        if (image.dataset.remoteLoaded === "true") {
-          image.src = "assets/ui/card.webp";
-          return;
-        }
-        image.dataset.remoteLoaded = "true";
-        image.src = remoteImage;
-      });
-    }
-    fragment.appendChild(item);
-  });
-  elements.expensiveCards.appendChild(fragment);
 }
 
 function renderSetBreakdown(profile) {
@@ -1077,20 +968,15 @@ function sortedModalCards() {
   const rows = [...currentModalCards];
   return rows.sort((a, b) => {
     const ownershipOrder = Number(a.owned <= 0) - Number(b.owned <= 0);
-    const manaOrder = number(a.cost) - number(b.cost);
     const rarityOrder = rarityWeight(b.rarity) - rarityWeight(a.rarity);
     const nameOrder = a.name.localeCompare(b.name, "ru");
     const idOrder = a.dbfId - b.dbfId;
 
-    if (currentModalSort === "mana") {
-      return manaOrder || rarityOrder || ownershipOrder || nameOrder || idOrder;
-    }
-
     if (currentModalSort === "rarity") {
-      return rarityOrder || manaOrder || ownershipOrder || nameOrder || idOrder;
+      return rarityOrder || ownershipOrder || nameOrder || idOrder;
     }
 
-    return ownershipOrder || rarityOrder || manaOrder || nameOrder || idOrder;
+    return ownershipOrder || rarityOrder || nameOrder || idOrder;
   });
 }
 
@@ -1118,7 +1004,6 @@ function renderModalCardGallery() {
     item.innerHTML = `
       <img src="${escapeHtml(cardRemoteImageUrl(row.cardId))}" alt="${escapeHtml(row.name)}" loading="lazy" decoding="async" />
       <span class="card-indicator-row">
-        <span class="card-indicator is-mana" title="Стоимость маны">${formatNumber(row.cost)}</span>
         ${copyBadges(row, { inline: true })}
       </span>
     `;
@@ -1138,8 +1023,8 @@ function openCardLightbox(index) {
   elements.lightboxImage.alt = row.name;
   elements.lightboxTitle.textContent = row.name;
   elements.lightboxMeta.textContent = row.owned > 0
-    ? `${copySummary(row)} · ${formatNumber(row.cost)} маны · ${rarityLabel(row.rarity)}`
-    : `Нет в коллекции · ${formatNumber(row.cost)} маны · ${rarityLabel(row.rarity)}`;
+    ? `${copySummary(row)} · ${rarityLabel(row.rarity)}`
+    : `Нет в коллекции · ${rarityLabel(row.rarity)}`;
   elements.lightboxBadges.innerHTML = copyBadgeItems(row, { showZeroGolden: true });
   elements.cardLightbox.classList.add("is-open");
   elements.cardLightbox.setAttribute("aria-hidden", "false");
