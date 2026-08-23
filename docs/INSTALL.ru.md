@@ -38,7 +38,7 @@ HdtCollectionExporter.dll
 Готовый файл будет здесь:
 
 ```text
-src\HdtCollectionExporter\bin\x86\Release\HdtCollectionExporter.dll
+src\HdtCollectionExporter\bin\Release\HdtCollectionExporter.dll
 ```
 
 ## 4. Открыть папку расширений HDT

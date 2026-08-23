@@ -38,7 +38,7 @@ If the script cannot find HDT automatically, pass the HDT app folder:
 The build output is:
 
 ```text
-src\HdtCollectionExporter\bin\x86\Release\HdtCollectionExporter.dll
+src\HdtCollectionExporter\bin\Release\HdtCollectionExporter.dll
 ```
 
 ## 4. Open The HDT Plugins Folder

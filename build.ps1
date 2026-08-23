@@ -29,7 +29,7 @@ if (Test-Path $targetingPack) {
     & $msbuild ".\HdtCollectionExporter.sln" `
         /m `
         /p:Configuration=$Configuration `
-        /p:Platform=x86 `
+        /p:Platform="Any CPU" `
         /p:HDTInstallDir="$HDTInstallDir"
 
     if ($LASTEXITCODE -ne 0) {
@@ -41,14 +41,14 @@ if (Test-Path $targetingPack) {
 Write-Host ".NET Framework 4.7.2 targeting pack was not found. Using local fallback compiler path."
 
 $projectDir = Join-Path $PSScriptRoot "src\HdtCollectionExporter"
-$objDir = Join-Path $projectDir "obj\x86\$Configuration"
-$outDir = Join-Path $projectDir "bin\x86\$Configuration"
+$objDir = Join-Path $projectDir "obj\$Configuration"
+$outDir = Join-Path $projectDir "bin\$Configuration"
 New-Item -ItemType Directory -Force -Path $objDir, $outDir | Out-Null
 
 $legacyMsbuild = Join-Path $env:WINDIR "Microsoft.NET\Framework\v4.0.30319\MSBuild.exe"
 & $legacyMsbuild (Join-Path $projectDir "HdtCollectionExporter.csproj") `
     /p:Configuration=$Configuration `
-    /p:Platform=x86 `
+    /p:Platform="Any CPU" `
     /p:TargetFrameworkVersion=v4.0 `
     /p:HDTInstallDir="$HDTInstallDir" *> $null
 
@@ -109,7 +109,7 @@ $sources = @(
     "Settings\PluginSettings.cs",
     "UI\ExportWindowText.cs",
     "UI\ExportWindow.xaml.cs",
-    "obj\x86\$Configuration\UI\ExportWindow.g.cs"
+    "obj\$Configuration\UI\ExportWindow.g.cs"
 )
 
 Push-Location $projectDir
@@ -117,7 +117,7 @@ try {
     & $csc `
         /noconfig `
         /target:library `
-        /platform:x86 `
+        /platform:anycpu `
         /langversion:latest `
         /optimize+ `
         "/out:$outDir\HdtCollectionExporter.dll" `
