@@ -151,7 +151,7 @@ Build from the repository root:
 Build output:
 
 ```text
-src\HdtCollectionExporter\bin\x86\Release\HdtCollectionExporter.dll
+src\HdtCollectionExporter\bin\Release\HdtCollectionExporter.dll
 ```
 
 ## Project Structure
