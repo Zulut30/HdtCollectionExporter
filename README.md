@@ -142,16 +142,18 @@ Requirements:
 - Visual Studio 2022 Build Tools or Visual Studio
 - Recommended: .NET Framework 4.7.2 Developer Pack / targeting pack
 
-Build from the repository root:
+Build from the repository root.
+
+By default, the build script targets x86:
 
 ```powershell
 .\build.ps1
-```
 
 Build output:
 
 ```text
 src\HdtCollectionExporter\bin\x86\Release\HdtCollectionExporter.dll
+src\HdtCollectionExporter\bin\x64\Release\HdtCollectionExporter.dll
 ```
 
 ## Project Structure
