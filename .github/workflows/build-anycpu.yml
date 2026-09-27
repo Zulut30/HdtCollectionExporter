@@ -1,0 +1,38 @@
+name: Build AnyCPU plugin
+
+on:
+  workflow_dispatch:
+    inputs:
+      hdt_version:
+        description: "HDT version to build against"
+        required: true
+        default: "1.58.3"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install .NET Framework 4.7.2 Developer Pack
+        shell: powershell
+        run: choco install netfx-4.7.2-devpack -y --no-progress
+
+      - name: Download HDT
+        shell: powershell
+        run: |
+          $version = "${{ inputs.hdt_version }}"
+          $url = "https://github.com/HearthSim/Hearthstone-Deck-Tracker/releases/download/v$version/Hearthstone.Deck.Tracker-v$version.zip"
+          Invoke-WebRequest -Uri $url -OutFile hdt.zip
+          Expand-Archive hdt.zip -DestinationPath hdt
+
+      - name: Build
+        shell: powershell
+        run: .\build.ps1 -Configuration Release -HDTInstallDir "${{ github.workspace }}\hdt"
+
+      - name: Upload DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: HdtCollectionExporter-AnyCPU
+          path: src/HdtCollectionExporter/bin/AnyCPU/Release/HdtCollectionExporter.dll
+          if-no-files-found: error
