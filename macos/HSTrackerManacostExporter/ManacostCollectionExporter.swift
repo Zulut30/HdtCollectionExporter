@@ -17,11 +17,14 @@ enum ManacostExportFormat {
 enum ManacostCollectionExportError: LocalizedError {
     case collectionUnavailable
     case invalidBaseline
+    case partialExport([URL], String)
 
     var errorDescription: String? {
         switch self {
         case .collectionUnavailable:
             return "HSTracker could not read the Hearthstone collection. Start Hearthstone, log in, and wait for HSTracker to read the collection."
+        case .partialExport(let files, let details):
+            return "Some files were saved: \(files.map { $0.lastPathComponent }.joined(separator: ", ")). Baseline was not advanced. \(details)"
         case .invalidBaseline:
             return "Selected baseline is not a valid full Manacost collection JSON export."
         }
@@ -47,6 +50,7 @@ struct ManacostExportResult {
     let changeCount: Int
     let baselineCreated: Bool
     let files: [URL]
+    var warning: String? = nil
 }
 
 final class ManacostCollectionExporter {
@@ -54,9 +58,12 @@ final class ManacostCollectionExporter {
     private static let exportVersion = 3
 
     private let baselineURL: URL
+    private let store: ManacostSnapshotStore
+    private var currentUser: ManacostUserProfileRecord?
 
     init(baselineURL: URL = ManacostCollectionExporter.defaultBaselineURL()) {
         self.baselineURL = baselineURL
+        self.store = ManacostSnapshotStore(root: baselineURL.deletingLastPathComponent())
     }
 
     func export(format: ManacostExportFormat, options: ManacostExportOptions) throws -> ManacostExportResult {
@@ -65,34 +72,51 @@ final class ManacostCollectionExporter {
         let document = try makeDocument(exportedAt: exportedAt, options: options)
         let baseName = "hearthstone-collection-\(Self.fileStamp(exportedAt))"
         var files = [URL]()
+        var staged = [(URL, URL)]()
+        defer { for (temp, _) in staged { try? FileManager.default.removeItem(at: temp) } }
 
         if format.includesJson {
             let url = options.outputFolder.appendingPathComponent("\(baseName).json")
-            try writeJSON(document, to: url)
-            files.append(url)
+            let temp = url.appendingPathExtension("tmp")
+            staged.append((temp, url))
+            try writeFullJSON(document, options: options, to: temp)
         }
 
         if format.includesCsv {
             let url = options.outputFolder.appendingPathComponent("\(baseName).csv")
-            try writeCSV(document.cards, to: url)
-            files.append(url)
+            let temp = url.appendingPathExtension("tmp")
+            staged.append((temp, url))
+            try writeCSV(document.cards, options: options, to: temp)
         }
 
-        try saveBaseline(document)
+        do {
+            for (temp, url) in staged { try FileManager.default.moveItem(at: temp, to: url); files.append(url) }
+        } catch { throw ManacostCollectionExportError.partialExport(files, error.localizedDescription) }
+        var warning: String?
+        do { try saveBaseline(document) } catch { warning = "Export files saved; baseline/history were not updated. " + error.localizedDescription }
+
         return ManacostExportResult(
             exportedAt: exportedAt,
             cardCount: document.cards.count,
             changeCount: 0,
             baselineCreated: false,
-            files: files
+            files: files,
+            warning: warning
         )
     }
 
     func exportChanges(format: ManacostExportFormat, options: ManacostExportOptions) throws -> ManacostExportResult {
         try prepareDirectory(options.outputFolder)
-        let previous = loadBaseline(outputFolder: options.outputFolder)
-        let exportedAt = Date()
+                let exportedAt = Date()
         let current = try makeDocument(exportedAt: exportedAt, options: options)
+        if try store.baseline(current.user) == nil,
+           let legacyData = try? Data(contentsOf: baselineURL),
+           let legacy = try? JSONDecoder().decode(ManacostCollectionExportDocument.self, from: legacyData),
+           legacy.user.accountHi == current.user.accountHi && legacy.user.accountLo == current.user.accountLo {
+            try store.save(legacy, complete: false)
+        }
+        let stored = try store.baseline(current.user)
+        let previous = stored?.completeCounts == true ? try stored?.document : nil
 
         guard let previous = previous else {
             try saveBaseline(current)
@@ -108,26 +132,36 @@ final class ManacostCollectionExporter {
         let delta = buildDelta(previous: previous, current: current, exportedAt: exportedAt)
         let baseName = "hearthstone-collection-changes-\(Self.fileStamp(exportedAt))"
         var files = [URL]()
+        var staged = [(URL, URL)]()
+        defer { for (temp, _) in staged { try? FileManager.default.removeItem(at: temp) } }
 
         if format.includesJson {
             let url = options.outputFolder.appendingPathComponent("\(baseName).json")
-            try writeJSON(delta, to: url)
-            files.append(url)
+            let temp = url.appendingPathExtension("tmp")
+            staged.append((temp, url))
+            try writeJSON(delta, to: temp)
         }
 
         if format.includesCsv {
             let url = options.outputFolder.appendingPathComponent("\(baseName).csv")
-            try writeDeltaCSV(delta.cards, to: url)
-            files.append(url)
+            let temp = url.appendingPathExtension("tmp")
+            staged.append((temp, url))
+            try writeDeltaCSV(delta.cards, to: temp)
         }
 
-        try saveBaseline(current)
+        do {
+            for (temp, url) in staged { try FileManager.default.moveItem(at: temp, to: url); files.append(url) }
+        } catch { throw ManacostCollectionExportError.partialExport(files, error.localizedDescription) }
+        var warning: String?
+        do { try saveBaseline(current) } catch { warning = "Export files saved; baseline/history were not updated. " + error.localizedDescription }
+
         return ManacostExportResult(
             exportedAt: exportedAt,
             cardCount: current.cards.count,
             changeCount: delta.summary.totalChanges,
             baselineCreated: false,
-            files: files
+            files: files,
+            warning: warning
         )
     }
 
@@ -138,9 +172,26 @@ final class ManacostCollectionExporter {
     }
 
     func clearBaseline() throws {
-        if FileManager.default.fileExists(atPath: baselineURL.path) {
-            try FileManager.default.removeItem(at: baselineURL)
-        }
+        guard let user = currentUser else { throw ManacostCollectionExportError.collectionUnavailable }
+        try store.clear(user)
+    }
+    func historyFolder(options: ManacostExportOptions) throws -> URL {
+        let document = try makeDocument(exportedAt: Date(), options: options)
+        return try store.directory(document.user).appendingPathComponent("history")
+    }
+    func exportHistory(first: URL, second: URL, options: ManacostExportOptions) throws -> [URL] {
+        let a = try store.read(first); let b = try store.read(second)
+        let previous = try a.document; let current = try b.document
+        guard a.completeCounts && b.completeCounts,
+              previous.user.accountHi == current.user.accountHi && previous.user.accountLo == current.user.accountLo,
+              previous.exportedAt < current.exportedAt else { throw ManacostCollectionExportError.invalidBaseline }
+        let delta = buildDelta(previous: previous, current: current, exportedAt: Date())
+        try prepareDirectory(options.outputFolder)
+        let name = "hearthstone-collection-changes-history-" + UUID().uuidString
+        let json = options.outputFolder.appendingPathComponent(name + ".json")
+        let csv = options.outputFolder.appendingPathComponent(name + ".csv")
+        try writeJSON(delta, to: json); try writeDeltaCSV(delta.cards, to: csv)
+        return [json, csv]
     }
 
     private func makeDocument(exportedAt: Date, options: ManacostExportOptions) throws -> ManacostCollectionExportDocument {
@@ -149,6 +200,8 @@ final class ManacostCollectionExporter {
             throw ManacostCollectionExportError.collectionUnavailable
         }
 
+        currentUser = ManacostUserProfileRecord(battleTag: collection.battleTag, accountHi: UInt64(bitPattern: collection.accountHi), accountLo: UInt64(bitPattern: collection.accountLo))
+        _ = try ManacostSnapshotStore.accountKey(currentUser!)
         let playerRecords = buildPlayerRecords(collection.player_records)
         let classStats = buildClassStats(playerRecords)
         return ManacostCollectionExportDocument(
@@ -157,8 +210,8 @@ final class ManacostCollectionExporter {
             version: Self.exportVersion,
             user: ManacostUserProfileRecord(
                 battleTag: collection.battleTag,
-                accountHi: collection.accountHi,
-                accountLo: collection.accountLo
+                accountHi: UInt64(bitPattern: collection.accountHi),
+                accountLo: UInt64(bitPattern: collection.accountLo)
             ),
             dust: collection.dust,
             cardBacks: collection.cardbacks.sorted(),
@@ -176,17 +229,17 @@ final class ManacostCollectionExporter {
         return collection.map { dbfId, counts in
             let card = Cards.by(dbfId: dbfId, collectible: false)
             let normal = Self.safeCount(counts, 0)
-            let golden = options.includeGoldenCount ? Self.safeCount(counts, 1) : 0
-            let diamond = options.includeGoldenCount ? Self.safeCount(counts, 2) : 0
-            let signature = options.includeGoldenCount ? Self.safeCount(counts, 3) : 0
+            let golden = Self.safeCount(counts, 1)
+            let diamond = Self.safeCount(counts, 2)
+            let signature = Self.safeCount(counts, 3)
 
             return ManacostCollectionCardRecord(
                 cardId: card?.id ?? "",
                 dbfId: dbfId,
-                name: options.includeCardNames ? card?.name ?? "" : "",
-                set: options.includeMetadata ? Self.normalized(card?.set?.rawValue) : "",
-                rarity: options.includeMetadata ? Self.normalized(card?.rarity.rawValue) : "",
-                cardClass: options.includeMetadata ? Self.normalized(card?.playerClass.rawValue) : "",
+                name: card?.name ?? "",
+                set: Self.normalized(card?.set?.rawValue),
+                rarity: Self.normalized(card?.rarity.rawValue),
+                cardClass: Self.normalized(card?.playerClass.rawValue),
                 normal: normal,
                 golden: golden,
                 diamond: diamond,
@@ -305,57 +358,8 @@ final class ManacostCollectionExporter {
         )
     }
 
-    private func loadBaseline(outputFolder: URL) -> ManacostCollectionExportDocument? {
-        if let document = readDocument(baselineURL) {
-            return document
-        }
-
-        guard let urls = try? FileManager.default.contentsOfDirectory(
-            at: outputFolder,
-            includingPropertiesForKeys: [.contentModificationDateKey],
-            options: [.skipsHiddenFiles]
-        ) else {
-            return nil
-        }
-
-        let candidates = urls
-            .filter { $0.lastPathComponent.hasPrefix("hearthstone-collection-") }
-            .filter { $0.pathExtension.lowercased() == "json" }
-            .filter { !$0.lastPathComponent.contains("-changes-") }
-            .sorted { lhs, rhs in
-                let left = (try? lhs.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-                let right = (try? rhs.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-                return left > right
-            }
-
-        for candidate in candidates {
-            if let document = readDocument(candidate) {
-                return document
-            }
-        }
-        return nil
-    }
-
-    private func readDocument(_ url: URL) -> ManacostCollectionExportDocument? {
-        guard let data = try? Data(contentsOf: url) else {
-            return nil
-        }
-        if let raw = try? JSONSerialization.jsonObject(with: data),
-           let object = raw as? [String: Any],
-           let exportType = object["exportType"] as? String,
-           exportType.lowercased() == "changes" {
-            return nil
-        }
-        guard let document = try? JSONDecoder().decode(ManacostCollectionExportDocument.self, from: data),
-              !document.cards.isEmpty else {
-            return nil
-        }
-        return document
-    }
-
     private func saveBaseline(_ document: ManacostCollectionExportDocument) throws {
-        try prepareDirectory(baselineURL.deletingLastPathComponent())
-        try writeJSON(document, to: baselineURL)
+        try store.save(document)
     }
 
     private func buildDelta(
@@ -372,7 +376,7 @@ final class ManacostCollectionExporter {
         let favoriteCardBackChange = previous.favoriteCardBack == current.favoriteCardBack
             ? nil
             : numericChange(previous: previous.favoriteCardBack, current: current.favoriteCardBack)
-        let userChange = previous.user == current.user ? nil : ManacostValueChange(previous: previous.user, current: current.user)
+        let userChange = previous.user.accountHi == current.user.accountHi && previous.user.accountLo == current.user.accountLo ? nil : ManacostValueChange(previous: previous.user, current: current.user)
         let favoriteClassChange = previous.favoriteClass == current.favoriteClass
             ? nil
             : ManacostValueChange(previous: previous.favoriteClass, current: current.favoriteClass)
@@ -442,7 +446,9 @@ final class ManacostCollectionExporter {
         return keys.compactMap { key in
             let old = previousMap[key]
             let new = currentMap[key]
-            if old == new {
+            if old != nil && new != nil && old!.normal == new!.normal && old!.golden == new!.golden &&
+               old!.diamond == new!.diamond && old!.signature == new!.signature && old!.trialNormal == new!.trialNormal &&
+               old!.trialGolden == new!.trialGolden && old!.trialDiamond == new!.trialDiamond && old!.trialSignature == new!.trialSignature {
                 return nil
             }
 
@@ -637,18 +643,30 @@ final class ManacostCollectionExporter {
         try data.write(to: url, options: [.atomic])
     }
 
-    private func writeCSV(_ cards: [ManacostCollectionCardRecord], to url: URL) throws {
+    private func writeFullJSON(_ document: ManacostCollectionExportDocument, options: ManacostExportOptions, to url: URL) throws {
+        let encoded = try JSONEncoder().encode(document)
+        var object = try JSONSerialization.jsonObject(with: encoded) as! [String: Any]
+        var cards = object["cards"] as! [[String: Any]]
+        for index in cards.indices {
+            if !options.includeCardNames { cards[index]["name"] = "" }
+            if !options.includeMetadata { for key in ["set", "rarity", "class"] { cards[index][key] = "" } }
+        }
+        object["cards"] = cards
+        try JSONSerialization.data(withJSONObject: object, options: [.sortedKeys, .prettyPrinted]).write(to: url, options: .atomic)
+    }
+
+    private func writeCSV(_ cards: [ManacostCollectionCardRecord], options: ManacostExportOptions, to url: URL) throws {
         var lines = ["cardId,dbfId,name,set,rarity,class,normal,golden,ownedTotal"]
         for card in cards {
             lines.append([
                 card.cardId,
                 String(card.dbfId),
-                card.name,
-                card.set,
-                card.rarity,
-                card.cardClass,
+                options.includeCardNames ? card.name : "",
+                options.includeMetadata ? card.set : "",
+                options.includeMetadata ? card.rarity : "",
+                options.includeMetadata ? card.cardClass : "",
                 String(card.normal),
-                String(card.golden),
+                options.includeGoldenCount ? String(card.golden) : "",
                 String(card.ownedTotal)
             ].map(Self.escapeCSV).joined(separator: ","))
         }
@@ -709,8 +727,8 @@ final class ManacostCollectionExporter {
     private static func fileStamp(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyyMMdd-HHmmss"
-        return formatter.string(from: date)
+        formatter.dateFormat = "yyyyMMdd-HHmmss-SSS"
+        return formatter.string(from: date) + "-" + UUID().uuidString
     }
 
     private static func safeCount(_ values: [Int], _ index: Int) -> Int {

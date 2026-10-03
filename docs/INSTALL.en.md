@@ -1,179 +1,30 @@
-# Installation Guide
+# Install Collection Exporter 1.6
 
-This guide explains how to install HDT Collection Exporter by Manacost, a plugin for [HearthSim/Hearthstone-Deck-Tracker](https://github.com/HearthSim/Hearthstone-Deck-Tracker).
+Requires Windows and 64-bit Hearthstone Deck Tracker. Download the DLL or ZIP from [releases](https://github.com/Zulut30/HdtCollectionExporter/releases/latest).
 
-For macOS/HSTracker, see [HSTracker macOS Support](HSTRACKER_MACOS.en.md). HSTracker currently needs the Swift source adapter to be added to an HSTracker build; it cannot load the Windows HDT DLL.
+1. Fully close HDT, including the tray icon.
+2. Extract the ZIP and run `install.ps1` in PowerShell. It backs up the DLL/plugins.xml and combines the previous English/Russian entries while retaining the enabled state.
+3. Start HDT. On a fresh install, enable `Collection Exporter by Manacost` under Options → Tracker → Plugins.
+4. Open the exporter from the Plugins menu. Select Auto, Русский or English inside its window.
 
-## 1. Requirements
+Manual install: copy only `HdtCollectionExporter.dll` into `%APPDATA%/HearthstoneDeckTracker/Plugins`, then restart HDT. Updating the old Russian entry manually may require enabling the new stable entry once. Do not copy HDT dependencies or source files.
 
-- Windows
-- Hearthstone Deck Tracker installed
+## Export and history
 
-## 2. Download The Release
+Start Hearthstone and log in. The window shows collection data when HDT reads it. Choose full/changes, JSON/CSV/both and a destination, then use the fixed Save action. Preview and export use the same snapshot; refresh it after five minutes.
 
-Open the latest release and download:
+The first changes export saves a baseline without creating a delta file. Every successful export stores a full immutable snapshot per account. Compare two dates under History or use the selected snapshot as your baseline. History has no automatic retention limit. Optional pruning keeps 30 recent snapshots, active/backup baselines and damaged files for recovery, after confirmation.
 
-```text
-HdtCollectionExporter.dll
-```
+Legacy exports are preserved with unknown count completeness; create a fresh baseline before accurate changes export. JSON schema 3 retains all actual permanent/trial counts. Trial copies are excluded from ownedTotal. Name/metadata toggles affect presentation; the golden toggle affects the CSV column. Internal history always keeps complete information. Export does not send files over the network.
 
-[Latest Release](https://github.com/Zulut30/HdtCollectionExporter/releases/latest)
+## Build
 
-## 3. Build From Source, Optional
-
-If you want to build the plugin yourself, install Visual Studio 2022 Build Tools or Visual Studio, then run:
-
-Open PowerShell in the repository root and run:
+Install Visual Studio Build Tools with the .NET desktop workload. Debug and Release target x64. A missing targeting pack is replaced by pinned NuGet reference assemblies. The unsafe legacy compiler fallback is retired.
 
 ```powershell
 .\build.ps1
+.\build.ps1 -HDTInstallDir 'D:\Apps\HearthstoneDeckTracker\app-1.58.6'
+.\build.ps1 -PinnedDependencies
 ```
 
-If the script cannot find HDT automatically, pass the HDT app folder:
-
-```powershell
-.\build.ps1 -HDTInstallDir "C:\Users\<you>\AppData\Local\HearthstoneDeckTracker\app-1.52.14"
-```
-
-The build output is:
-
-```text
-src\HdtCollectionExporter\bin\x64\Release\HdtCollectionExporter.dll
-```
-
-## 4. Open The HDT Plugins Folder
-
-In Hearthstone Deck Tracker:
-
-1. Open `Options`.
-2. Go to `Tracker`.
-3. Open `Plugins`.
-4. Click `Plugins Folder`.
-
-This usually opens:
-
-```text
-%AppData%\HearthstoneDeckTracker\Plugins
-```
-
-## 5. Copy The Correct File
-
-Copy only:
-
-```text
-HdtCollectionExporter.dll
-```
-
-Do not copy:
-
-- `HdtCollectionExporter.sln`
-- `.csproj` files
-- source `.cs` files
-- `bin` or `obj` folders
-
-HDT loads `.dll` plugin files only.
-
-## 6. Restart HDT
-
-Fully close HDT, including the tray icon near the clock, then start HDT again.
-
-If HDT was already running while you copied the DLL, restart is important because HDT may keep the old DLL loaded.
-
-## 7. Enable The Plugin
-
-In `Options > Tracker > Plugins`, enable either:
-
-- `Collection Exporter by Manacost`
-- `Экспорт коллекции от Manacost`
-
-Both entries use the same export logic. The second one has Russian UI text.
-
-## 8. Export Files
-
-Start Hearthstone, log in, and wait for HDT to read the collection.
-
-Then open:
-
-```text
-Plugins > Collection Exporter by Manacost
-```
-
-or:
-
-```text
-Plugins > Экспорт коллекции от Manacost
-```
-
-Choose an output folder and click:
-
-- `Export JSON`
-- `Export CSV`
-- `Export Both`
-- `Changes JSON`
-- `Changes CSV`
-- `Changes Both`
-
-Default output folder:
-
-```text
-Documents\HDT Collection Exports
-```
-
-Changes export compares the current collection with the last local baseline and creates:
-
-```text
-hearthstone-collection-changes-YYYYMMDD-HHMMSS.json
-hearthstone-collection-changes-YYYYMMDD-HHMMSS.csv
-```
-
-The baseline tools are:
-
-- `Set current` — save the current collection as the baseline.
-- `Import JSON` — import an older full JSON export as the baseline.
-- `Clear` — remove saved baseline files.
-
-If there is no baseline yet, changes export creates one from the current collection instead of failing. After a successful changes export, the baseline is updated to the current collection.
-
-## Exported Data
-
-Full JSON schema version: `3`.
-
-JSON includes collection cards, dust, card backs, favorite card back, favorite heroes, raw `playerRecords`, derived `classStats`, `favoriteClass`, `bestClassByWins`, and basic user identifiers exposed by HDT.
-
-`classStats` is derived from `playerRecords`: each non-zero `records[].data` value is treated as a hero DBF ID, resolved through HearthDb, and grouped by `CardClass`. `recordTypes[].type` keeps the raw numeric HDT/Hearthstone record type, usually the game mode bucket.
-
-In CSV, `golden` is the real golden-card count. `ownedTotal` includes normal, golden, diamond, and signature copies. The detailed premium split is available in JSON.
-
-## Troubleshooting
-
-### The plugin does not appear
-
-Check that the plugins folder contains:
-
-```text
-HdtCollectionExporter.dll
-```
-
-and not:
-
-```text
-HdtCollectionExporter.sln
-```
-
-Then fully restart HDT.
-
-### Export says collection data is unavailable
-
-Start Hearthstone, log in, and wait a moment. HDT can export collection data only after it has read the collection from the running game/client.
-
-### Cannot write file
-
-Choose another output folder, for example:
-
-```text
-Documents\HDT Collection Exports
-```
-
-### Changes export creates a baseline instead of writing changes
-
-That means there was no previous baseline. Make changes to the collection and run `Changes JSON`, `Changes CSV`, or `Changes Both` again.
+Output: `src/HdtCollectionExporter/bin/x64/Release/HdtCollectionExporter.dll`. See [release notes](RELEASE_NOTES-1.6.0.md). macOS uses the separate [HSTracker source adapter](HSTRACKER_MACOS.en.md).

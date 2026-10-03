@@ -2,8 +2,8 @@ import Foundation
 
 struct ManacostUserProfileRecord: Codable, Equatable {
     let battleTag: String
-    let accountHi: Int64
-    let accountLo: Int64
+    let accountHi: UInt64
+    let accountLo: UInt64
 }
 
 struct ManacostFavoriteHeroRecord: Codable, Equatable {

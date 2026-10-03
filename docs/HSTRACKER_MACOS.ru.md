@@ -34,6 +34,7 @@ macos/HSTrackerManacostExporter/
   ManacostCollectionExportModels.swift
   ManacostCollectionExporter.swift
   ManacostCollectionExportMenuController.swift
+  ManacostSnapshotStore.swift
 ```
 
 Адаптер экспортирует тот же формат, что Windows HDT plugin:
@@ -115,3 +116,7 @@ Baseline-файл:
 Адаптер использует модели HSTracker/HearthMirror и не читает память процесса вручную. Экспортированные данные никуда не отправляются.
 
 Готовый installable HSTracker plugin bundle нельзя сделать без поддержки внешних плагинов в HSTracker или без включения адаптера в сборку HSTracker.
+
+## Version 1.6 validation boundary
+
+The source adapter now retains complete counts, UInt64 identifiers, account-specific immutable history, historical comparison and atomic output staging. Legacy baseline files are preserved and treated as incomplete. Add all four Swift files to the HSTracker target. CI parses the adapter and compiles/runs the shared models/storage fixture. This does not prove a native HSTracker build or its AppKit menu; those still require integration and manual testing on macOS.

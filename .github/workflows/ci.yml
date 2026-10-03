@@ -1,0 +1,49 @@
+name: Collection exporter CI
+on:
+  pull_request:
+  push:
+    branches: [main, 'codex/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-2022
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Build classic WPF plugin against pinned HDT
+        shell: pwsh
+        run: ./build.ps1 -Configuration ${{ matrix.configuration }} -PinnedDependencies
+      - name: Domain regression tests
+        run: dotnet test tests/HdtCollectionExporter.Tests/HdtCollectionExporter.Tests.csproj -c ${{ matrix.configuration }} --logger trx --results-directory artifacts/test-results
+      - name: STA x64 plugin smoke
+        shell: powershell
+        run: ./scripts/check-plugin-load.ps1 -PluginPath src/HdtCollectionExporter/bin/x64/${{ matrix.configuration }}/HdtCollectionExporter.dll -HdtDirectory 'artifacts/dependencies/hdt/Hearthstone Deck Tracker'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm run check
+      - run: node --test tests/web/import.test.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-${{ matrix.configuration }}
+          path: |
+            artifacts/test-results
+            src/HdtCollectionExporter/bin/x64/${{ matrix.configuration }}/HdtCollectionExporter.dll
+  macos-source:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parse adapter and AppKit menu
+        run: swiftc -frontend -parse macos/HSTrackerManacostExporter/*.swift
+      - name: Shared schema and storage fixture
+        run: |
+          swiftc macos/HSTrackerManacostExporter/ManacostCollectionExportModels.swift macos/HSTrackerManacostExporter/ManacostSnapshotStore.swift tests/macos/main.swift -o /tmp/manacost-fixture-tests
+          /tmp/manacost-fixture-tests tests/fixtures/collection-v3.json

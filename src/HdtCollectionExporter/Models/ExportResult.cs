@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace HdtCollectionExporter.Models
@@ -17,6 +17,9 @@ namespace HdtCollectionExporter.Models
         public int ChangeCount { get; set; }
 
         public bool BaselineCreated { get; set; }
+
+        public string Warning { get; set; }
+        public string WarningDetails { get; set; }
 
         public string BaselinePath { get; set; }
 

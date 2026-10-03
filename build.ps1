@@ -1,136 +1,45 @@
-param(
-    [string]$Configuration = "Release",
-    [string]$HDTInstallDir
+﻿param(
+    [ValidateSet('Debug','Release')][string]$Configuration = 'Release',
+    [string]$HDTInstallDir,
+    [string]$ReferenceRoot,
+    [switch]$PinnedDependencies
 )
-
-$ErrorActionPreference = "Stop"
-
-if (-not $HDTInstallDir) {
-    $root = Join-Path $env:LOCALAPPDATA "HearthstoneDeckTracker"
-    $HDTInstallDir = Get-ChildItem $root -Directory -Filter "app-*" |
-        Sort-Object { [version]($_.Name -replace "^app-", "") } -Descending |
-        Select-Object -First 1 -ExpandProperty FullName
+$ErrorActionPreference = 'Stop'
+$repo = $PSScriptRoot
+if($PinnedDependencies) {
+    & (Join-Path $repo 'scripts\get-build-dependencies.ps1')
+    $HDTInstallDir = Join-Path $repo 'artifacts\dependencies\hdt\Hearthstone Deck Tracker'
+    $ReferenceRoot = Join-Path $repo 'artifacts\dependencies\net472\build'
 }
-
-if (-not $HDTInstallDir -or -not (Test-Path (Join-Path $HDTInstallDir "HearthstoneDeckTracker.exe"))) {
-    throw "HDTInstallDir was not found. Pass -HDTInstallDir 'C:\Path\To\HearthstoneDeckTracker\app-x.y.z'."
-}
-
-$targetingPack = Join-Path ${env:ProgramFiles(x86)} "Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2"
-if (Test-Path $targetingPack) {
-    $msbuild = Get-ChildItem "C:\Program Files (x86)\Microsoft Visual Studio" -Recurse -Filter MSBuild.exe |
-        Where-Object { $_.FullName -like "*\MSBuild\Current\Bin\MSBuild.exe" } |
-        Select-Object -First 1 -ExpandProperty FullName
-
-    if (-not $msbuild) {
-        $msbuild = "msbuild"
-    }
-
-    & $msbuild ".\HdtCollectionExporter.sln" `
-        /m `
-        /p:Configuration=$Configuration `
-        /p:Platform=x64 `
-        /p:HDTInstallDir="$HDTInstallDir"
-
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
-    }
-    exit 0
-}
-
-Write-Host ".NET Framework 4.7.2 targeting pack was not found. Using local fallback compiler path."
-
-$projectDir = Join-Path $PSScriptRoot "src\HdtCollectionExporter"
-$objDir = Join-Path $projectDir "obj\x64\$Configuration"
-$outDir = Join-Path $projectDir "bin\x64\$Configuration"
-New-Item -ItemType Directory -Force -Path $objDir, $outDir | Out-Null
-
-$legacyMsbuild = Join-Path $env:WINDIR "Microsoft.NET\Framework\v4.0.30319\MSBuild.exe"
-& $legacyMsbuild (Join-Path $projectDir "HdtCollectionExporter.csproj") `
-    /p:Configuration=$Configuration `
-    /p:Platform=x64 `
-    /p:TargetFrameworkVersion=v4.0 `
-    /p:HDTInstallDir="$HDTInstallDir" *> $null
-
-$generatedCode = Join-Path $objDir "UI\ExportWindow.g.cs"
-$generatedResources = Join-Path $objDir "HdtCollectionExporter.g.resources"
-if (-not (Test-Path $generatedCode) -or -not (Test-Path $generatedResources)) {
-    throw "WPF generated files were not created. Install the .NET Framework 4.7.2 Developer Pack and rerun build.ps1."
-}
-
-$csc = Get-ChildItem "C:\Program Files (x86)\Microsoft Visual Studio" -Recurse -Filter csc.exe |
-    Where-Object { $_.FullName -like "*\Roslyn\csc.exe" } |
-    Select-Object -First 1 -ExpandProperty FullName
-
-if (-not $csc) {
-    throw "Roslyn csc.exe was not found. Install Visual Studio Build Tools or the .NET Framework 4.7.2 Developer Pack."
-}
-
-$frameworkDir = Join-Path $env:WINDIR "Microsoft.NET\Framework\v4.0.30319"
-$presentationFramework = Get-ChildItem (Join-Path $env:WINDIR "Microsoft.NET\assembly\GAC_MSIL\PresentationFramework") -Recurse -Filter PresentationFramework.dll | Select-Object -First 1 -ExpandProperty FullName
-$presentationCore = Get-ChildItem (Join-Path $env:WINDIR "Microsoft.NET\assembly\GAC_64\PresentationCore") -Recurse -Filter PresentationCore.dll | Select-Object -First 1 -ExpandProperty FullName
-$windowsBase = Get-ChildItem (Join-Path $env:WINDIR "Microsoft.NET\assembly\GAC_MSIL\WindowsBase") -Recurse -Filter WindowsBase.dll | Select-Object -First 1 -ExpandProperty FullName
-$microsoftCSharp = Get-ChildItem (Join-Path $env:WINDIR "Microsoft.NET\assembly\GAC_MSIL\Microsoft.CSharp") -Recurse -Filter Microsoft.CSharp.dll | Select-Object -First 1 -ExpandProperty FullName
-
-$refs = @(
-    (Join-Path $HDTInstallDir "HearthstoneDeckTracker.exe"),
-    (Join-Path $HDTInstallDir "HearthDb.dll"),
-    (Join-Path $HDTInstallDir "Newtonsoft.Json.dll"),
-    (Join-Path $frameworkDir "mscorlib.dll"),
-    (Join-Path $frameworkDir "System.dll"),
-    (Join-Path $frameworkDir "System.Core.dll"),
-    (Join-Path $frameworkDir "System.Data.dll"),
-    (Join-Path $frameworkDir "System.Xml.dll"),
-    (Join-Path $frameworkDir "System.Xml.Linq.dll"),
-    (Join-Path $frameworkDir "System.Xaml.dll"),
-    (Join-Path $frameworkDir "System.Windows.Forms.dll"),
-    (Join-Path $frameworkDir "netstandard.dll"),
-    $presentationFramework,
-    $presentationCore,
-    $windowsBase,
-    $microsoftCSharp
-) | ForEach-Object { "/reference:$_" }
-
-$sources = @(
-    "HdtCollectionExporterPlugin.cs",
-    "Models\BaselineStatus.cs",
-    "Models\CollectionCardRecord.cs",
-    "Models\CollectionDeltaExportDocument.cs",
-    "Models\CollectionExportDocument.cs",
-    "Models\CollectionSnapshot.cs",
-    "Models\ExportFormat.cs",
-    "Models\ExportOptions.cs",
-    "Models\ExportResult.cs",
-    "Properties\AssemblyInfo.cs",
-    "Services\CollectionExportService.cs",
-    "Services\CollectionUnavailableException.cs",
-    "Services\HdtCollectionProvider.cs",
-    "Services\ICollectionProvider.cs",
-    "Settings\PluginSettings.cs",
-    "UI\ExportWindowText.cs",
-    "UI\ExportWindow.xaml.cs",
-    "obj\x64\$Configuration\UI\ExportWindow.g.cs"
-)
-
-Push-Location $projectDir
-try {
-    & $csc `
-        /noconfig `
-        /target:library `
-        /platform:x64 `
-        /langversion:latest `
-        /optimize+ `
-        "/out:$outDir\HdtCollectionExporter.dll" `
-        "/resource:$generatedResources" `
-        @refs `
-        @sources
-
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
+if(-not $HDTInstallDir) {
+    $running = Get-Process HearthstoneDeckTracker -ErrorAction SilentlyContinue | Select-Object -First 1
+    if($running -and $running.Path) { $HDTInstallDir = Split-Path $running.Path }
+    else {
+        $searchRoots = @((Join-Path $env:LOCALAPPDATA 'HearthstoneDeckTracker'), 'D:\Apps\HearthstoneDeckTracker')
+        $HDTInstallDir = $searchRoots | Where-Object { Test-Path -LiteralPath $_ } |
+            ForEach-Object { Get-ChildItem -LiteralPath $_ -Directory -Filter 'app-*' } |
+            Sort-Object { [version]($_.Name -replace '^app-', '') } -Descending |
+            Select-Object -First 1 -ExpandProperty FullName
     }
 }
-finally {
-    Pop-Location
+$hdtExe = @('HearthstoneDeckTracker.exe', 'Hearthstone Deck Tracker.exe') |
+    ForEach-Object { if($HDTInstallDir) { Join-Path $HDTInstallDir $_ } } |
+    Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+if(-not $hdtExe) { throw 'HDT was not found. Use -HDTInstallDir or -PinnedDependencies.' }
+foreach($dependency in @('HearthDb.dll','Newtonsoft.Json.dll')) {
+    if(-not (Test-Path -LiteralPath (Join-Path $HDTInstallDir $dependency))) { throw "Missing HDT dependency: $dependency" }
 }
-
-Write-Host "Built $outDir\HdtCollectionExporter.dll"
+$vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+$msbuild = if(Test-Path -LiteralPath $vswhere) { & $vswhere -latest -products '*' -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1 }
+if(-not $msbuild) { $msbuild = (Get-Command msbuild.exe -ErrorAction SilentlyContinue).Source }
+if(-not $msbuild) { throw 'Install Visual Studio Build Tools with the .NET desktop workload. The unsafe legacy compiler fallback has been retired.' }
+if(-not $ReferenceRoot -and -not (Test-Path -LiteralPath (Join-Path ${env:ProgramFiles(x86)} 'Reference Assemblies\Microsoft\Framework\.NETFramework\v4.7.2'))) {
+    & (Join-Path $repo 'scripts\get-build-dependencies.ps1') -ReferenceOnly
+    $ReferenceRoot = Join-Path $repo 'artifacts\dependencies\net472\build'
+}
+$arguments = @((Join-Path $repo 'HdtCollectionExporter.sln'), '/m', '/t:Rebuild', '/nologo', '/verbosity:minimal',
+    "/p:Configuration=$Configuration", '/p:Platform=x64', "/p:HDTInstallDir=$HDTInstallDir", "/p:HDTExecutable=$hdtExe")
+if($ReferenceRoot) { $arguments += "/p:TargetFrameworkRootPath=$ReferenceRoot\" }
+& $msbuild @arguments
+if($LASTEXITCODE -ne 0) { throw "MSBuild failed ($LASTEXITCODE)." }
+Write-Host "Built x64 $Configuration against $hdtExe"

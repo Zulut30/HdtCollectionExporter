@@ -1,0 +1,27 @@
+name: Release x64 exporter
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - shell: pwsh
+        run: ./build.ps1 -Configuration Release -PinnedDependencies
+      - run: dotnet test tests/HdtCollectionExporter.Tests/HdtCollectionExporter.Tests.csproj -c Release
+      - shell: powershell
+        run: ./scripts/check-plugin-load.ps1 -PluginPath src/HdtCollectionExporter/bin/x64/Release/HdtCollectionExporter.dll -HdtDirectory 'artifacts/dependencies/hdt/Hearthstone Deck Tracker'
+      - name: Package and publish
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = $env:GITHUB_REF_NAME.Substring(1)
+          ./scripts/package.ps1 -Version $version
+          gh release create $env:GITHUB_REF_NAME artifacts/release/HdtCollectionExporter.dll "artifacts/release/HdtCollectionExporter-v$version.zip" "artifacts/release/HSTrackerManacostExporter-v$version-source.zip" artifacts/release/SHA256SUMS.txt --verify-tag --title "Manacost Collection Exporter $version" --notes-file "docs/RELEASE_NOTES-$version.md"

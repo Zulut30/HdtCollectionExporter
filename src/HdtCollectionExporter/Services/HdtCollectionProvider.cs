@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,6 +10,7 @@ namespace HdtCollectionExporter.Services
 {
     public class HdtCollectionProvider : ICollectionProvider
     {
+        private Task<Collection> _pendingRead;
         public async Task<CollectionSnapshot> GetCollectionAsync(ExportOptions options)
         {
             if(options == null)
@@ -18,7 +19,9 @@ namespace HdtCollectionExporter.Services
             Collection collection;
             try
             {
-                collection = await CollectionHelpers.Hearthstone.GetCollection();
+                if(_pendingRead == null || _pendingRead.IsCompleted)
+                    _pendingRead = CollectionHelpers.Hearthstone.GetCollection();
+                collection = await _pendingRead;
             }
             catch(Exception ex)
             {
@@ -41,24 +44,24 @@ namespace HdtCollectionExporter.Services
                 var card = Database.GetCardFromDbfId(dbfId, false);
 
                 var normal = SafeCount(counts, 0);
-                var golden = options.IncludeGoldenCount ? SafeCount(counts, 1) : 0;
-                var diamond = options.IncludeGoldenCount ? SafeCount(counts, 2) : 0;
-                var signature = options.IncludeGoldenCount ? SafeCount(counts, 3) : 0;
+                var golden = SafeCount(counts, 1);
+                var diamond = SafeCount(counts, 2);
+                var signature = SafeCount(counts, 3);
 
                 cards.Add(new CollectionCardRecord
                 {
                     CardId = card != null ? card.Id ?? string.Empty : string.Empty,
                     DbfId = dbfId,
-                    Name = options.IncludeCardNames && card != null
+                    Name = card != null
                         ? FirstNonEmpty(card.Name, card.LocalizedName)
                         : string.Empty,
-                    Set = options.IncludeMetadata && card != null && card.CardSet.HasValue
+                    Set = card != null && card.CardSet.HasValue
                         ? card.CardSet.Value.ToString()
                         : string.Empty,
-                    Rarity = options.IncludeMetadata && card != null && card.Rarity != Rarity.INVALID
+                    Rarity = card != null && card.Rarity != Rarity.INVALID
                         ? card.Rarity.ToString()
                         : string.Empty,
-                    Class = options.IncludeMetadata && card != null && card.CardClass != CardClass.INVALID
+                    Class = card != null && card.CardClass != CardClass.INVALID
                         ? card.CardClass.ToString()
                         : string.Empty,
                     Normal = normal,
@@ -91,6 +94,8 @@ namespace HdtCollectionExporter.Services
                 ClassStats = classStats,
                 FavoriteClass = BuildFavoriteClass(classStats, "mostGames"),
                 BestClassByWins = BuildFavoriteClass(classStats, "mostWins"),
+                Catalog = Database.GetActualCards().Select(card => new CatalogCard { CardId = card.Id,
+                    Set = card.CardSet.HasValue ? card.CardSet.Value.ToString() : "", Rarity = card.Rarity.ToString() }).ToList(),
                 Cards = cards
                     .OrderBy(x => x.DbfId)
                     .ThenBy(x => x.CardId)
