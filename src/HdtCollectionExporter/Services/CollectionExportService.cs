@@ -1,9 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using HdtCollectionExporter.Models;
 using Newtonsoft.Json;
@@ -16,178 +17,180 @@ namespace HdtCollectionExporter.Services
         private const string ExportSource = "Hearthstone Deck Tracker plugin by Manacost";
         private const int ExportVersion = 3;
         private readonly ICollectionProvider _collectionProvider;
-        private readonly string _baselineSnapshotPath;
-        private readonly IList<string> _baselineCandidatePaths;
+        private readonly IList<string> _legacyPaths;
+        private readonly SemaphoreSlim _operation = new SemaphoreSlim(1, 1);
+        private UserProfileRecord _currentUser;
+        public SnapshotStore Store { get; private set; }
 
-        public CollectionExportService(ICollectionProvider collectionProvider)
-            : this(collectionProvider, null)
+        public CollectionExportService(ICollectionProvider provider)
+            : this(provider, (string)null, null) { }
+        public CollectionExportService(ICollectionProvider provider, string baselinePath)
+            : this(provider, baselinePath, null) { }
+        public CollectionExportService(ICollectionProvider provider, string baselinePath, IEnumerable<string> candidates)
         {
+            if(provider == null) throw new ArgumentNullException("provider");
+            _collectionProvider = provider;
+            _legacyPaths = BuildBaselineCandidatePaths(baselinePath, candidates);
+            Store = new SnapshotStore(baselinePath == null
+                ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "HearthstoneDeckTracker", "HdtCollectionExporter")
+                : Path.GetDirectoryName(Path.GetFullPath(baselinePath)));
+        }
+        public CollectionExportService(ICollectionProvider provider, SnapshotStore store)
+        {
+            if(provider == null) throw new ArgumentNullException("provider");
+            _collectionProvider = provider;
+            Store = store ?? throw new ArgumentNullException("store");
+            _legacyPaths = new List<string>();
         }
 
-        public CollectionExportService(ICollectionProvider collectionProvider, string baselineSnapshotPath)
-            : this(collectionProvider, baselineSnapshotPath, null)
+        public async Task<CollectionPreview> PrepareAsync(CancellationToken token)
         {
-        }
-
-        public CollectionExportService(
-            ICollectionProvider collectionProvider,
-            string baselineSnapshotPath,
-            IEnumerable<string> baselineCandidatePaths)
-        {
-            if(collectionProvider == null)
-                throw new ArgumentNullException("collectionProvider");
-            _collectionProvider = collectionProvider;
-            _baselineSnapshotPath = baselineSnapshotPath;
-            _baselineCandidatePaths = BuildBaselineCandidatePaths(baselineSnapshotPath, baselineCandidatePaths);
+            await _operation.WaitAsync(token);
+            try
+            {
+                var read = GetSnapshotAsync(new ExportOptions { IncludeCardNames = true, IncludeGoldenCount = true, IncludeMetadata = true });
+                var cancelled = new TaskCompletionSource<bool>();
+                using(token.Register(() => cancelled.TrySetCanceled()))
+                {
+                    if(await Task.WhenAny(read, cancelled.Task) != read)
+                    {
+                        // Observe a late HDT fault after cancellation; never commit its result.
+                        _ = read.ContinueWith(t => { var ignored = t.Exception; }, TaskContinuationOptions.OnlyOnFaulted);
+                        token.ThrowIfCancellationRequested();
+                    }
+                    var snapshot = await read;
+                    token.ThrowIfCancellationRequested();
+                    var now = DateTimeOffset.Now;
+                    var document = ToDocument(snapshot, now);
+                    SnapshotStore.AccountKey(document.User);
+                    _currentUser = document.User;
+                    var preview = new CollectionPreview { Document = document, ReadAt = now, Catalog = snapshot.Catalog };
+                    try
+                    {
+                        Store.MigrateLegacy(_legacyPaths, document.User);
+                        var baseline = Store.Baseline(document.User);
+                        if(baseline != null && baseline.CompleteCounts)
+                        {
+                            preview.Changes = Compare(baseline.Document, document);
+                            preview.BaselineChecksum = baseline.Checksum;
+                        }
+                        else if(baseline != null) preview.BaselineIssue = "LegacyCountsUnknown";
+                    }
+                    catch(InvalidDataException) { preview.BaselineIssue = "CorruptBaseline"; }
+                    return preview;
+                }
+            }
+            finally { _operation.Release(); }
         }
 
         public async Task<ExportResult> ExportAsync(ExportFormat format, ExportOptions options)
-        {
-            if(options == null)
-                throw new ArgumentNullException("options");
-            if(string.IsNullOrWhiteSpace(options.OutputFolder))
-                throw new InvalidOperationException("Output folder is empty.");
-
-            var outputFolder = PrepareOutputFolder(options.OutputFolder);
-            var snapshot = await GetSnapshotAsync(options);
-            var exportedAt = DateTimeOffset.Now;
-            var document = ToDocument(snapshot, exportedAt);
-            var baseName = "hearthstone-collection-" + exportedAt.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
-            var result = new ExportResult
-            {
-                ExportedAt = exportedAt,
-                CardCount = document.Cards.Count
-            };
-
-            if((format & ExportFormat.Json) == ExportFormat.Json)
-            {
-                var path = Path.Combine(outputFolder, baseName + ".json");
-                await Task.Run(delegate { WriteJson(path, document); });
-                result.Files.Add(path);
-            }
-
-            if((format & ExportFormat.Csv) == ExportFormat.Csv)
-            {
-                var path = Path.Combine(outputFolder, baseName + ".csv");
-                await Task.Run(delegate { WriteCsv(path, document.Cards); });
-                result.Files.Add(path);
-            }
-
-            SaveBaselineDocument(document);
-            return result;
-        }
-
+        { return await ExportPreparedAsync(await PrepareAsync(CancellationToken.None), false, format, options, CancellationToken.None); }
         public async Task<ExportResult> ExportChangesAsync(ExportFormat format, ExportOptions options)
+        { return await ExportPreparedAsync(await PrepareAsync(CancellationToken.None), true, format, options, CancellationToken.None); }
+
+        public async Task<ExportResult> ExportPreparedAsync(CollectionPreview preview, bool changes, ExportFormat format, ExportOptions options, CancellationToken token)
         {
-            if(options == null)
-                throw new ArgumentNullException("options");
-            if(string.IsNullOrWhiteSpace(options.OutputFolder))
-                throw new InvalidOperationException("Output folder is empty.");
-
-            var outputFolder = PrepareOutputFolder(options.OutputFolder);
-            var previousDocument = LoadBaselineDocument(outputFolder);
-            var snapshot = await GetSnapshotAsync(options);
-            var exportedAt = DateTimeOffset.Now;
-            var currentDocument = ToDocument(snapshot, exportedAt);
-
-            if(previousDocument == null)
+            if(preview == null) throw new ArgumentNullException("preview");
+            if(options == null) throw new ArgumentNullException("options");
+            if(format != ExportFormat.Json && format != ExportFormat.Csv && format != ExportFormat.Both) throw new ArgumentOutOfRangeException("format");
+            if(string.IsNullOrWhiteSpace(options.OutputFolder)) throw new InvalidOperationException("Output folder is empty.");
+            await _operation.WaitAsync(token);
+            try
             {
-                SaveBaselineDocument(currentDocument);
-                return new ExportResult
+                token.ThrowIfCancellationRequested();
+                SnapshotStore.AccountKey(preview.Document.User);
+                if(_currentUser != null) SnapshotStore.RequireSameAccount(_currentUser, preview.Document.User);
+                StoredSnapshot baseline = null;
+                try { baseline = Store.Baseline(preview.Document.User); }
+                catch(InvalidDataException) { if(changes) throw; }
+                if(changes && preview.BaselineIssue == "CorruptBaseline") throw new InvalidDataException("Repair the baseline before exporting changes.");
+                if(changes && ((baseline == null || !baseline.CompleteCounts ? null : baseline.Checksum) != preview.BaselineChecksum))
+                    throw new InvalidOperationException("Baseline changed. Refresh the preview.");
+                var result = new ExportResult { ExportedAt = preview.ReadAt, CardCount = preview.Document.Cards.Count,
+                    ChangeCount = preview.Changes == null ? 0 : preview.Changes.Summary.TotalChanges, BaselinePath = Store.BaselinePath(preview.Document.User) };
+                if(changes && preview.Changes == null)
                 {
-                    ExportedAt = exportedAt,
-                    CardCount = currentDocument.Cards.Count,
-                    ChangeCount = 0,
-                    BaselineCreated = true,
-                    BaselinePath = _baselineSnapshotPath
-                };
+                    Store.Save(preview.Document, true, preview.Catalog);
+                    result.BaselineCreated = true;
+                    return result;
+                }
+                var folder = PrepareOutputFolder(options.OutputFolder);
+                var name = "hearthstone-collection-" + (changes ? "changes-" : "") + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff", CultureInfo.InvariantCulture) + "-" + Guid.NewGuid().ToString("N").Substring(0, 8);
+                var files = new Dictionary<string, string>();
+                // Public schema v3 remains stable. Count fields always contain the actual
+                // inventory; display options only hide names/metadata and the CSV golden column.
+                var projected = JsonConvert.DeserializeObject<CollectionExportDocument>(SnapshotStore.Serialize(preview.Document));
+                foreach(var card in projected.Cards)
+                {
+                    if(!options.IncludeCardNames) card.Name = "";
+                    if(!options.IncludeMetadata) { card.Set = ""; card.Rarity = ""; card.Class = ""; }
+                }
+                if((format & ExportFormat.Json) != 0) files.Add(Path.Combine(folder, name + ".json"),
+                    changes ? JsonConvert.SerializeObject(preview.Changes, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore }) : SnapshotStore.Serialize(projected));
+                if((format & ExportFormat.Csv) != 0) files.Add(Path.Combine(folder, name + ".csv"), changes ? DeltaCsv(preview.Changes.Cards) : FullCsv(projected.Cards, options.IncludeGoldenCount));
+                var completed = await Task.Run(() => AtomicFile.WriteBatch(files, token));
+                foreach(var path in completed) result.Files.Add(path);
+                try { Store.Save(preview.Document, true, preview.Catalog); }
+                catch(Exception ex) { result.Warning = "BaselineSaveFailed"; result.WarningDetails = ex.Message; }
+                return result;
             }
-
-            var deltaDocument = BuildDeltaDocument(previousDocument, currentDocument, exportedAt);
-            var baseName = "hearthstone-collection-changes-" + exportedAt.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
-            var result = new ExportResult
-            {
-                ExportedAt = exportedAt,
-                CardCount = currentDocument.Cards.Count,
-                ChangeCount = deltaDocument.Summary.TotalChanges,
-                BaselinePath = _baselineSnapshotPath
-            };
-
-            if((format & ExportFormat.Json) == ExportFormat.Json)
-            {
-                var path = Path.Combine(outputFolder, baseName + ".json");
-                await Task.Run(delegate { WriteDeltaJson(path, deltaDocument); });
-                result.Files.Add(path);
-            }
-
-            if((format & ExportFormat.Csv) == ExportFormat.Csv)
-            {
-                var path = Path.Combine(outputFolder, baseName + ".csv");
-                await Task.Run(delegate { WriteDeltaCsv(path, deltaDocument.Cards); });
-                result.Files.Add(path);
-            }
-
-            SaveBaselineDocument(currentDocument);
-            return result;
+            finally { _operation.Release(); }
         }
 
         public async Task<BaselineStatus> SaveCurrentAsBaselineAsync(ExportOptions options)
         {
-            if(options == null)
-                throw new ArgumentNullException("options");
-
-            var snapshot = await GetSnapshotAsync(options);
-            var exportedAt = DateTimeOffset.Now;
-            var document = ToDocument(snapshot, exportedAt);
-            SaveBaselineDocument(document);
+            var preview = await PrepareAsync(CancellationToken.None);
+            SavePreparedBaseline(preview);
             return GetBaselineStatus();
         }
-
+        public void SavePreparedBaseline(CollectionPreview preview)
+        {
+            _operation.Wait();
+            try { Store.Save(preview.Document, true, preview.Catalog); }
+            finally { _operation.Release(); }
+        }
         public BaselineStatus ImportBaselineFile(string path)
         {
-            var document = TryReadDocument(path);
-            if(document == null)
-                throw new InvalidOperationException("Selected file is not a valid full collection JSON export.");
-
-            SaveBaselineDocument(document);
+            _operation.Wait();
+            try { Store.Import(path, _currentUser); }
+            finally { _operation.Release(); }
             return GetBaselineStatus();
         }
-
         public void ClearBaseline()
         {
-            foreach(var path in _baselineCandidatePaths)
-            {
-                try
-                {
-                    if(!string.IsNullOrWhiteSpace(path) && File.Exists(path))
-                        File.Delete(path);
-                }
-                catch
-                {
-                }
-            }
+            _operation.Wait();
+            try { Store.Clear(_currentUser); }
+            finally { _operation.Release(); }
         }
-
         public BaselineStatus GetBaselineStatus()
         {
-            foreach(var path in _baselineCandidatePaths)
-            {
-                var document = TryReadDocument(path);
-                if(document == null)
-                    continue;
-
-                var fileInfo = new FileInfo(path);
-                return new BaselineStatus
-                {
-                    Exists = true,
-                    Path = path,
-                    ExportedAt = document.ExportedAt,
-                    CardCount = document.Cards != null ? document.Cards.Count : 0,
-                    LastWriteTimeUtc = fileInfo.LastWriteTimeUtc
-                };
-            }
-
-            return new BaselineStatus { Exists = false, Path = _baselineSnapshotPath };
+            if(_currentUser == null) return new BaselineStatus { Exists = false };
+            var baseline = Store.Baseline(_currentUser);
+            return new BaselineStatus { Exists = baseline != null, Path = Store.BaselinePath(_currentUser),
+                CardCount = baseline == null ? 0 : baseline.Document.Cards.Count, ExportedAt = baseline == null ? null : baseline.Document.ExportedAt };
+        }
+        public static CollectionDeltaExportDocument Compare(CollectionExportDocument previous, CollectionExportDocument current)
+        {
+            SnapshotStore.RequireSameAccount(previous.User, current.User);
+            return BuildDeltaDocument(previous, current, DateTimeOffset.Now);
+        }
+        public CollectionPreview CompareHistory(string first, string second)
+        {
+            var a = Store.Read(first); var b = Store.Read(second);
+            SnapshotStore.RequireSameAccount(a.Document.User, b.Document.User);
+            if(!a.CompleteCounts || !b.CompleteCounts) throw new InvalidDataException("Historical counts are incomplete.");
+            if(DateTimeOffset.Parse(a.Document.ExportedAt, CultureInfo.InvariantCulture) >= DateTimeOffset.Parse(b.Document.ExportedAt, CultureInfo.InvariantCulture))
+                throw new InvalidOperationException("Choose an earlier snapshot and a later snapshot.");
+            return new CollectionPreview { Document = b.Document, Changes = Compare(a.Document, b.Document), ReadAt = DateTimeOffset.Parse(b.Document.ExportedAt, CultureInfo.InvariantCulture) };
+        }
+        public async Task<IList<string>> ExportHistoryAsync(string first, string second, string folder, CancellationToken token)
+        {
+            var preview = CompareHistory(first, second);
+            var name = "hearthstone-collection-changes-history-" + Guid.NewGuid().ToString("N");
+            var output = PrepareOutputFolder(folder);
+            return await Task.Run(() => AtomicFile.WriteBatch(new Dictionary<string, string> {
+                { Path.Combine(output, name + ".json"), SnapshotStore.Serialize(preview.Changes) },
+                { Path.Combine(output, name + ".csv"), DeltaCsv(preview.Changes.Cards) } }, token));
         }
 
         private async Task<CollectionSnapshot> GetSnapshotAsync(ExportOptions options)
@@ -207,7 +210,7 @@ namespace HdtCollectionExporter.Services
 
         private static CollectionExportDocument ToDocument(CollectionSnapshot snapshot, DateTimeOffset exportedAt)
         {
-            return new CollectionExportDocument
+            var document = new CollectionExportDocument
             {
                 ExportedAt = exportedAt.ToString("o", CultureInfo.InvariantCulture),
                 Source = ExportSource,
@@ -227,42 +230,9 @@ namespace HdtCollectionExporter.Services
                     .ThenBy(card => card.CardId)
                     .ToList()
             };
-        }
-
-        private static void WriteJson(string path, CollectionExportDocument document)
-        {
-            var json = JsonConvert.SerializeObject(document, Formatting.Indented);
-            File.WriteAllText(path, json, new UTF8Encoding(false));
-        }
-
-        private static void WriteDeltaJson(string path, CollectionDeltaExportDocument document)
-        {
-            var settings = new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore };
-            var json = JsonConvert.SerializeObject(document, Formatting.Indented, settings);
-            File.WriteAllText(path, json, new UTF8Encoding(false));
-        }
-
-        private void SaveBaselineDocument(CollectionExportDocument document)
-        {
-            if(string.IsNullOrWhiteSpace(_baselineSnapshotPath))
-                return;
-
-            var directory = Path.GetDirectoryName(_baselineSnapshotPath);
-            if(!string.IsNullOrWhiteSpace(directory))
-                Directory.CreateDirectory(directory);
-            WriteJson(_baselineSnapshotPath, document);
-        }
-
-        private CollectionExportDocument LoadBaselineDocument(string outputFolder)
-        {
-            foreach(var path in _baselineCandidatePaths)
-            {
-                var document = TryReadDocument(path);
-                if(document != null)
-                    return document;
-            }
-
-            return LoadLatestFullExportDocument(outputFolder);
+            // Freeze account and non-card records as well as inventory counts:
+            // HDT may refresh its mutable objects while the preview is displayed.
+            return JsonConvert.DeserializeObject<CollectionExportDocument>(SnapshotStore.Serialize(document));
         }
 
         private static IList<string> BuildBaselineCandidatePaths(
@@ -284,54 +254,6 @@ namespace HdtCollectionExporter.Services
             return paths
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
-        }
-
-        private static CollectionExportDocument LoadLatestFullExportDocument(string outputFolder)
-        {
-            if(string.IsNullOrWhiteSpace(outputFolder) || !Directory.Exists(outputFolder))
-                return null;
-
-            var files = Directory.GetFiles(outputFolder, "hearthstone-collection-*.json")
-                .Where(path => Path.GetFileName(path).IndexOf("-changes-", StringComparison.OrdinalIgnoreCase) < 0)
-                .OrderByDescending(File.GetLastWriteTimeUtc)
-                .ToList();
-
-            foreach(var file in files)
-            {
-                var document = TryReadDocument(file);
-                if(document != null)
-                    return document;
-            }
-
-            return null;
-        }
-
-        private static CollectionExportDocument TryReadDocument(string path)
-        {
-            if(string.IsNullOrWhiteSpace(path) || !File.Exists(path))
-                return null;
-
-            try
-            {
-                var text = File.ReadAllText(path);
-                var parsed = JObject.Parse(text);
-                var exportType = parsed.Value<string>("exportType");
-                if(string.Equals(exportType, "changes", StringComparison.OrdinalIgnoreCase))
-                    return null;
-
-                var document = parsed.ToObject<CollectionExportDocument>();
-                if(document == null || document.Cards == null || document.Cards.Count == 0)
-                    return null;
-                document.CardBacks = document.CardBacks ?? new List<int>();
-                document.FavoriteHeroes = document.FavoriteHeroes ?? new List<FavoriteHeroRecord>();
-                document.PlayerRecords = document.PlayerRecords ?? new List<PlayerRecordGroup>();
-                document.ClassStats = document.ClassStats ?? new List<ClassStatRecord>();
-                return document;
-            }
-            catch
-            {
-                return null;
-            }
         }
 
         private static CollectionDeltaExportDocument BuildDeltaDocument(
@@ -847,8 +769,7 @@ namespace HdtCollectionExporter.Services
                 return true;
             if(previous == null || current == null)
                 return false;
-            return string.Equals(previous.BattleTag ?? string.Empty, current.BattleTag ?? string.Empty, StringComparison.Ordinal) &&
-                   previous.AccountHi == current.AccountHi &&
+            return previous.AccountHi == current.AccountHi &&
                    previous.AccountLo == current.AccountLo;
         }
 
@@ -866,7 +787,7 @@ namespace HdtCollectionExporter.Services
                    previous.Games == current.Games;
         }
 
-        private static void WriteCsv(string path, IList<CollectionCardRecordJson> cards)
+        public static string FullCsv(IList<CollectionCardRecordJson> cards, bool includeGolden = true)
         {
             var lines = new List<string> { "cardId,dbfId,name,set,rarity,class,normal,golden,ownedTotal" };
             foreach(var card in cards)
@@ -880,15 +801,15 @@ namespace HdtCollectionExporter.Services
                     EscapeCsv(card.Rarity),
                     EscapeCsv(card.Class),
                     EscapeCsv(card.Normal.ToString(CultureInfo.InvariantCulture)),
-                    EscapeCsv(card.Golden.ToString(CultureInfo.InvariantCulture)),
+                    includeGolden ? EscapeCsv(card.Golden.ToString(CultureInfo.InvariantCulture)) : "",
                     EscapeCsv(card.OwnedTotal.ToString(CultureInfo.InvariantCulture))
                 }));
             }
 
-            File.WriteAllText(path, string.Join(Environment.NewLine, lines), new UTF8Encoding(false));
+            return string.Join(Environment.NewLine, lines);
         }
 
-        private static void WriteDeltaCsv(string path, IList<CollectionCardDeltaRecord> cardChanges)
+        public static string DeltaCsv(IList<CollectionCardDeltaRecord> cardChanges)
         {
             var lines = new List<string>
             {
@@ -918,7 +839,7 @@ namespace HdtCollectionExporter.Services
                 }));
             }
 
-            File.WriteAllText(path, string.Join(Environment.NewLine, lines), new UTF8Encoding(false));
+            return string.Join(Environment.NewLine, lines);
         }
 
         private static string EscapeCsv(string value)

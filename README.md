@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <img src="src/HdtCollectionExporter/Assets/manacost_logo.jpg" alt="Manacost banner" width="820" />
 </p>
 
@@ -40,7 +40,9 @@ No network requests are made by the plugin during export.
 - Changes-only export to JSON or CSV using a local baseline.
 - Local baseline controls: set current, import old full JSON, clear baseline.
 - Exports collection cards, dust, card backs, favorite card back, favorite heroes, raw player records, derived class stats, and basic user identifiers exposed by HDT.
-- English and Russian plugin entries in one DLL.
+- One stable plugin entry with automatic, Russian and English UI.
+- Immutable history per account, historical comparisons and set completion from the HDT catalog.
+- Atomic writes, backups, cancellation and exact 64-bit account identifiers.
 - Manacost-branded WPF export window.
 - Swift source adapter for HSTracker/macOS using the same JSON/CSV schema.
 
@@ -63,7 +65,9 @@ Release assets:
 4. Click `Plugins Folder`.
 5. Copy only `HdtCollectionExporter.dll` into that folder.
 6. Fully restart HDT, including the tray icon.
-7. Enable either `Collection Exporter by Manacost` or `Экспорт коллекции от Manacost`.
+7. Enable `Collection Exporter by Manacost`. Choose the language inside the window.
+
+For an upgrade, fully close HDT and run `scripts/install.ps1` (or the `install.ps1` included in the release ZIP). It backs up the old DLL and migrates the enabled state of the old English/Russian entries.
 
 Usually the HDT plugin folder is:
 
@@ -127,8 +131,8 @@ The plugin stores a local baseline snapshot after a full export or when the user
 
 Changes export compares the current collection against the saved baseline:
 
-- `Changes JSON` writes `hearthstone-collection-changes-YYYYMMDD-HHMMSS.json`.
-- `Changes CSV` writes `hearthstone-collection-changes-YYYYMMDD-HHMMSS.csv`.
+- The Changes mode writes `hearthstone-collection-changes-<timestamp>-<unique-id>.json`.
+- The Changes mode can also write a CSV file with a unique timestamped name.
 - `Changes Both` writes both files.
 
 If no baseline exists yet, the plugin creates one from the current collection instead of failing. The next changes export will then contain only newer changes.
@@ -189,3 +193,16 @@ macos/HSTrackerManacostExporter/
 - [Hearthstone_Card_Export](https://github.com/Phoenixy/Hearthstone_Card_Export): reference for export flow and CSV behavior.
 
 The implementation here is separate code. Current collection access uses HDT's `CollectionHelpers.Hearthstone.GetCollection()` rather than OCR, network calls, or manual process-memory reading.
+
+## Development and verification
+
+Use Visual Studio Build Tools with the .NET desktop workload. `build.ps1 -PinnedDependencies` uses official HDT 1.55.6 with a verified archive checksum and .NET Framework 4.7.2 references. Running HDT or `-HDTInstallDir` selects your local installation. Builds always target x64. The unsafe legacy WPF fallback has been retired.
+
+```powershell
+.\build.ps1 -Configuration Release -PinnedDependencies
+dotnet test tests/HdtCollectionExporter.Tests/HdtCollectionExporter.Tests.csproj -c Release
+node --test tests/web/import.test.cjs
+.\scripts\package.ps1 -Version 1.6.0
+```
+
+Windows CI builds Debug/Release, runs regression tests and initializes the two UI languages in an x64 STA process. macOS CI builds/tests the export adapter with HSTracker boundary doubles and tests models/storage with the shared synthetic fixture. Native HSTracker integration and its menu still need a macOS integration build and manual validation. See [release notes](docs/RELEASE_NOTES-1.6.0.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.ru.md).

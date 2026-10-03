@@ -1,196 +1,34 @@
-# Гайд по установке
+# Установка Collection Exporter 1.6
 
-Этот гайд объясняет, как установить HDT Collection Exporter by Manacost — плагин для [HearthSim/Hearthstone-Deck-Tracker](https://github.com/HearthSim/Hearthstone-Deck-Tracker).
+Требуются Windows и 64-разрядный Hearthstone Deck Tracker. Скачайте DLL или ZIP из [релизов](https://github.com/Zulut30/HdtCollectionExporter/releases/latest).
 
-Для macOS/HSTracker смотри [поддержку HSTracker на macOS](HSTRACKER_MACOS.ru.md). HSTracker сейчас требует добавления Swift source adapter в сборку HSTracker; Windows DLL он загрузить не может.
+## Установка и обновление
 
-## 1. Требования
+1. Полностью закройте HDT, включая значок возле часов.
+2. Распакуйте ZIP и запустите `install.ps1` из PowerShell. Скрипт сохраняет прежнюю DLL и plugins.xml в `HdtCollectionExporter/backups` внутри папки данных HDT. Он объединяет старые английскую и русскую записи, сохраняя включённое состояние.
+3. Запустите HDT. При первой установке включите `Collection Exporter by Manacost` в `Настройки → Трекер → Расширения`.
+4. Откройте `Расширения → Коллекция Manacost`. Выберите Auto, Русский или English внутри окна.
 
-- Windows
-- Установленный Hearthstone Deck Tracker
+Для ручной установки скопируйте только `HdtCollectionExporter.dll` в `%APPDATA%/HearthstoneDeckTracker/Plugins`, затем перезапустите HDT. После ручного обновления старого русского варианта может понадобиться один раз включить новую запись. Исходники и зависимости HDT в Plugins копировать не нужно.
 
-## 2. Скачать Release
+## Экспорт
 
-Открой последний релиз и скачай:
+Запустите Hearthstone и войдите в аккаунт. После чтения HDT появятся данные коллекции. Выберите полную коллекцию или изменения, JSON / CSV / оба формата и папку. Нажмите закреплённую кнопку сохранения. Сводка и файл используют один прочитанный снимок; спустя пять минут окно предлагает обновить его.
 
-```text
-HdtCollectionExporter.dll
-```
+Первый экспорт изменений создаёт базу без файла изменений. История хранит полные снимки отдельно для каждого аккаунта. Старые JSON сохраняются, но полнота их премиальных счётчиков неизвестна: создайте новую базу перед точным сравнением.
 
-[Latest Release](https://github.com/Zulut30/HdtCollectionExporter/releases/latest)
+В «Истории» выберите раннюю и позднюю даты для экспорта сравнения. Выбранный снимок можно сделать базой. Автоматического удаления нет. Очистка до 30 снимков требует подтверждения и сохраняет действующую базу, её резервную копию и повреждённые файлы для восстановления.
 
-## 3. Сборка из исходников, опционально
+JSON v3 содержит реальные постоянные и пробные счётчики; пробные копии не входят в ownedTotal. Флажки названий и метаданных меняют только выгрузку; флажок золотых копий скрывает столбец CSV. История сохраняет полные сведения. Файлы не отправляются в сеть. Можно открыть папку, показать файл или скопировать путь после сохранения.
 
-Если хочешь собрать плагин сам, установи Visual Studio 2022 Build Tools или Visual Studio, затем запусти:
+## Сборка
 
-Открой PowerShell в корне репозитория и запусти:
+Установите Visual Studio Build Tools с нагрузкой .NET desktop. Поддерживаются Debug/Release x64. Если системного targeting pack нет, скрипт получает фиксированный пакет reference assemblies из NuGet. Старый небезопасный fallback-компилятор удалён.
 
 ```powershell
 .\build.ps1
+.\build.ps1 -HDTInstallDir 'D:\Apps\HearthstoneDeckTracker\app-1.58.6'
+.\build.ps1 -PinnedDependencies
 ```
 
-Если скрипт не нашел HDT автоматически, укажи папку установленной версии HDT:
-
-```powershell
-.\build.ps1 -HDTInstallDir "C:\Users\<you>\AppData\Local\HearthstoneDeckTracker\app-1.52.14"
-```
-
-Готовый файл будет здесь:
-
-```text
-src\HdtCollectionExporter\bin\x64\Release\HdtCollectionExporter.dll
-```
-
-## 4. Открыть папку расширений HDT
-
-В Hearthstone Deck Tracker:
-
-1. Открой `Настройки`.
-2. Перейди в `Трекер`.
-3. Открой `Расширения`.
-4. Нажми `Plugins Folder` / `Папка расширений`.
-
-Обычно открывается папка:
-
-```text
-%AppData%\HearthstoneDeckTracker\Plugins
-```
-
-## 5. Скопировать правильный файл
-
-Скопируй только:
-
-```text
-HdtCollectionExporter.dll
-```
-
-Не копируй:
-
-- `HdtCollectionExporter.sln`
-- `.csproj` файлы
-- исходники `.cs`
-- папки `bin` или `obj`
-
-HDT загружает только `.dll` файлы плагинов.
-
-## 6. Перезапустить HDT
-
-Полностью закрой HDT, включая иконку возле часов, затем запусти HDT снова.
-
-Если HDT был открыт во время копирования DLL, перезапуск обязателен: HDT может держать старую DLL загруженной.
-
-## 7. Включить плагин
-
-В `Настройки > Трекер > Расширения` включи один из вариантов:
-
-- `Collection Exporter by Manacost`
-- `Экспорт коллекции от Manacost`
-
-Оба пункта используют один и тот же экспорт. Второй вариант имеет русские тексты интерфейса.
-
-## 8. Экспорт файлов
-
-Запусти Hearthstone, войди в аккаунт и подожди, пока HDT прочитает коллекцию.
-
-Затем открой:
-
-```text
-Plugins > Collection Exporter by Manacost
-```
-
-или:
-
-```text
-Plugins > Экспорт коллекции от Manacost
-```
-
-Выбери папку и нажми:
-
-- `Export JSON` / `Экспорт JSON`
-- `Export CSV` / `Экспорт CSV`
-- `Export Both` / `Экспортировать оба`
-- `Changes JSON` / `Изменения JSON`
-- `Changes CSV` / `Изменения CSV`
-- `Changes Both` / `Изменения: оба`
-
-Папка по умолчанию:
-
-```text
-Документы\HDT Collection Exports
-```
-
-Экспорт изменений сравнивает текущую коллекцию с последним локальным baseline и создает:
-
-```text
-hearthstone-collection-changes-YYYYMMDD-HHMMSS.json
-hearthstone-collection-changes-YYYYMMDD-HHMMSS.csv
-```
-
-Инструменты baseline:
-
-- `Текущая база` — сохранить текущую коллекцию как baseline.
-- `Импорт JSON` — импортировать старый полный JSON экспорт как baseline.
-- `Очистить` — удалить сохраненные baseline-файлы.
-
-Если baseline еще нет, экспорт изменений создает его из текущей коллекции вместо ошибки. После успешного экспорта изменений baseline обновляется до текущей коллекции.
-
-## Что экспортируется
-
-JSON содержит:
-
-- `user.battleTag`
-- `user.accountHi`
-- `user.accountLo`
-- `dust`
-- `cardBacks`
-- `favoriteCardBack`
-- `favoriteHeroes`
-- `playerRecords`
-- `classStats`
-- `favoriteClass`
-- `bestClassByWins`
-- `cards`
-
-`classStats` строится из `playerRecords`: каждое ненулевое значение `records[].data` считается hero DBF ID, резолвится через HearthDb и группируется по `CardClass`. `recordTypes[].type` сохраняет сырой числовой тип записи HDT/Hearthstone, обычно это bucket игрового режима. `favoriteClass` показывает класс с наибольшим количеством записанных игр.
-
-CSV содержит фиксированные колонки:
-
-```text
-cardId,dbfId,name,set,rarity,class,normal,golden,ownedTotal
-```
-
-В CSV колонка `golden` — это реальное количество золотых копий. `ownedTotal` включает обычные, золотые, diamond и signature копии. Подробный premium-разбив есть в JSON.
-
-## Частые проблемы
-
-### Плагин не появился
-
-Проверь, что в папке расширений лежит:
-
-```text
-HdtCollectionExporter.dll
-```
-
-а не:
-
-```text
-HdtCollectionExporter.sln
-```
-
-После этого полностью перезапусти HDT.
-
-### Экспорт пишет, что коллекция недоступна
-
-Запусти Hearthstone, войди в аккаунт и подожди немного. HDT сможет экспортировать коллекцию только после того, как прочитает ее из клиента игры.
-
-### Нет доступа на запись файла
-
-Выбери другую папку экспорта, например:
-
-```text
-Документы\HDT Collection Exports
-```
-
-### Экспорт изменений создал baseline вместо файла изменений
-
-Это значит, что предыдущего baseline не было. Измени коллекцию и запусти `Изменения JSON`, `Изменения CSV` или `Изменения: оба` еще раз.
+DLL: `src/HdtCollectionExporter/bin/x64/Release/HdtCollectionExporter.dll`. Подробности изменений — в [release notes](RELEASE_NOTES-1.6.0.md). Для macOS нужен [исходный адаптер HSTracker](HSTRACKER_MACOS.ru.md).

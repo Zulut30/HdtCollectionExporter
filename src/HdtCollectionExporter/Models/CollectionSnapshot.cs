@@ -24,6 +24,7 @@ namespace HdtCollectionExporter.Models
         public FavoriteClassRecord BestClassByWins { get; set; }
 
         public IReadOnlyList<CollectionCardRecord> Cards { get; set; }
+        public IList<CatalogCard> Catalog { get; set; }
     }
 
     public class UserProfileRecord

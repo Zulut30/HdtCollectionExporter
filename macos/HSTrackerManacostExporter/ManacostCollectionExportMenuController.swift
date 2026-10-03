@@ -95,6 +95,8 @@ final class ManacostCollectionExportMenuController: NSObject, NSMenuDelegate {
         menu.addItem(NSMenuItem.separator())
         addMenuItem("Choose Output Folder...", action: #selector(chooseOutputFolder(_:)))
         addMenuItem("Open Output Folder", action: #selector(openOutputFolder(_:)))
+        addMenuItem("Open Snapshot History", action: #selector(openHistory(_:)))
+        addMenuItem("Compare Two Snapshots...", action: #selector(compareHistory(_:)))
         menu.addItem(NSMenuItem.separator())
         includeCardNamesItem = addMenuItem("Include Card Names", action: #selector(toggleIncludeCardNames(_:)))
         includeGoldenCountItem = addMenuItem("Include Golden Count", action: #selector(toggleIncludeGoldenCount(_:)))
@@ -203,7 +205,9 @@ final class ManacostCollectionExportMenuController: NSObject, NSMenuDelegate {
             settings.lastExportTime = result.exportedAt
             updateState()
 
-            if result.baselineCreated {
+            if let warning = result.warning {
+                showInfo("Files Saved", message: warning + "\n" + result.files.map { $0.lastPathComponent }.joined(separator: "\n"))
+            } else if result.baselineCreated {
                 showInfo(
                     "Baseline Created",
                     message: "No previous baseline was found. Current collection was saved as baseline; run changes export again after the collection changes."
@@ -218,6 +222,22 @@ final class ManacostCollectionExportMenuController: NSObject, NSMenuDelegate {
         } catch {
             showError(error)
         }
+    }
+
+    @objc private func openHistory(_ sender: NSMenuItem) {
+        do { NSWorkspace.shared.open(try exporter.historyFolder(options: settings.options())) }
+        catch { showError(error) }
+    }
+    @objc private func compareHistory(_ sender: NSMenuItem) {
+        let first = NSOpenPanel(); first.title = "Choose earlier snapshot"; first.allowedFileTypes = ["json"]
+        let second = NSOpenPanel(); second.title = "Choose later snapshot"; second.allowedFileTypes = ["json"]
+        do {
+            first.directoryURL = try exporter.historyFolder(options: settings.options())
+            second.directoryURL = first.directoryURL
+            guard first.runModal() == .OK, let a = first.url, second.runModal() == .OK, let b = second.url else { return }
+            let files = try exporter.exportHistory(first: a, second: b, options: settings.options())
+            showInfo("Comparison Saved", message: files.map { $0.lastPathComponent }.joined(separator: "\n"))
+        } catch { showError(error) }
     }
 
     private func updateState() {

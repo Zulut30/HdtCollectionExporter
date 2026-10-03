@@ -1,4 +1,4 @@
-# HSTracker macOS Support
+﻿# HSTracker macOS Support
 
 This repository now includes a source-level Manacost exporter adapter for [HearthSim/HSTracker](https://github.com/HearthSim/HSTracker).
 
@@ -34,6 +34,7 @@ macos/HSTrackerManacostExporter/
   ManacostCollectionExportModels.swift
   ManacostCollectionExporter.swift
   ManacostCollectionExportMenuController.swift
+  ManacostSnapshotStore.swift
 ```
 
 The adapter exports the same site-friendly schema as the Windows HDT plugin:
@@ -115,3 +116,7 @@ Baseline file:
 The adapter intentionally uses HSTracker/HearthMirror collection models instead of manual process memory reading. It does not send exported data anywhere.
 
 This repository cannot produce a ready-to-install HSTracker plugin bundle until HSTracker exposes an external plugin mechanism or the adapter is merged into an HSTracker build.
+
+## Version 1.6 validation boundary
+
+The source adapter now retains complete counts, UInt64 identifiers, account-specific immutable history, historical comparison and atomic output staging. Legacy baseline files are preserved and treated as incomplete. Add all four Swift files to the HSTracker target. CI parses the menu, builds/tests the export adapter with HSTracker boundary doubles, and compiles/runs the shared models/storage fixture. This does not prove a native HSTracker build or its AppKit menu; those still require integration and manual testing on macOS.

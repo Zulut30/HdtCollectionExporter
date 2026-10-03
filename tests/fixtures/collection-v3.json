@@ -1,0 +1,13 @@
+{
+  "exportedAt": "2026-01-01T12:00:00.000Z",
+  "source": "Synthetic interoperability fixture",
+  "version": 3,
+  "user": { "battleTag": "Fixture#0001", "accountHi": 18446744073709551615, "accountLo": 9007199254740993 },
+  "dust": 123,
+  "cardBacks": [1], "favoriteCardBack": 1,
+  "favoriteHeroes": [], "playerRecords": [], "classStats": [], "favoriteClass": null, "bestClassByWins": null,
+  "cards": [
+    { "cardId": "SYNTH_01", "dbfId": 1, "name": "A, \"quoted\"\ncard", "set": "SYNTH", "rarity": "RARE", "class": "MAGE",
+      "normal": 2, "golden": 1, "diamond": 1, "signature": 1, "premiumTotal": 3, "trialNormal": 3, "trialGolden": 2, "trialDiamond": 1, "trialSignature": 1, "ownedTotal": 5 }
+  ]
+}

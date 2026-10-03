@@ -1,219 +1,182 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using HdtCollectionExporter.Models;
+
 namespace HdtCollectionExporter.UI
 {
-    public class ExportWindowText
+    public sealed class ExportWindowText
     {
-        public string WindowTitle { get; set; }
-
-        public string HeaderTitle { get; set; }
-
-        public string BrandLine { get; set; }
-
-        public string HeaderDescription { get; set; }
-
-        public string OutputFolder { get; set; }
-
-        public string Browse { get; set; }
-
-        public string OptionsTitle { get; set; }
-
-        public string IncludeCardNames { get; set; }
-
-        public string IncludeGoldenCount { get; set; }
-
-        public string IncludeMetadata { get; set; }
-
-        public string FullExportTitle { get; set; }
-
-        public string ExportJson { get; set; }
-
-        public string ExportCsv { get; set; }
-
-        public string ExportBoth { get; set; }
-
-        public string ChangesExportTitle { get; set; }
-
-        public string ChangesHelp { get; set; }
-
-        public string ExportChangesJson { get; set; }
-
-        public string ExportChangesCsv { get; set; }
-
-        public string ExportChangesBoth { get; set; }
-
-        public string BaselineTitle { get; set; }
-
-        public string BaselineNotFound { get; set; }
-
-        public string BaselineReadyPrefix { get; set; }
-
-        public string BaselineReadyMiddle { get; set; }
-
-        public string SetBaseline { get; set; }
-
-        public string ImportBaseline { get; set; }
-
-        public string ClearBaseline { get; set; }
-
-        public string Status { get; set; }
-
-        public string PrivacyNote { get; set; }
-
-        public string FolderDialogDescription { get; set; }
-
-        public string Ready { get; set; }
-
-        public string Exporting { get; set; }
-
-        public string ExportingChanges { get; set; }
-
-        public string SuccessPrefix { get; set; }
-
-        public string SuccessMiddle { get; set; }
-
-        public string ChangesSuccessPrefix { get; set; }
-
-        public string ChangesSuccessMiddle { get; set; }
-
-        public string BaselineCreated { get; set; }
-
-        public string BaselineSavedPrefix { get; set; }
-
-        public string BaselineSavedSuffix { get; set; }
-
-        public string BaselineImportedPrefix { get; set; }
-
-        public string BaselineCleared { get; set; }
-
-        public string ImportBaselineDialogTitle { get; set; }
-
-        public string ImportBaselineFailedPrefix { get; set; }
-
-        public string ErrorPrefix { get; set; }
-
-        public string NoPreviousExport { get; set; }
-
-        public string CannotWrite { get; set; }
-
-        public string FileExportFailed { get; set; }
-
-        public string ExportFailed { get; set; }
-
-        public string LastExportNever { get; set; }
-
-        public string LastExportPrefix { get; set; }
-
-        public static ExportWindowText English()
+        public bool IsRussian { get; private set; }
+        private ExportWindowText(bool russian) { IsRussian = russian; }
+        public static ExportWindowText English() { return new ExportWindowText(false); }
+        public static ExportWindowText Russian() { return new ExportWindowText(true); }
+        public static ExportWindowText ForLanguage(string language)
         {
-            return new ExportWindowText
+            var culture = CultureInfo.CurrentUICulture.Name;
+            if(language == "auto")
             {
-                WindowTitle = "Collection Exporter by Manacost",
-                HeaderTitle = "Collection Exporter",
-                BrandLine = "by Manacost",
-                HeaderDescription = "Local collection export for JSON, CSV, and changes since the last baseline.",
-                OutputFolder = "Output folder",
-                Browse = "Browse...",
-                OptionsTitle = "Export options",
-                IncludeCardNames = "include card names",
-                IncludeGoldenCount = "include golden count",
-                IncludeMetadata = "include metadata",
-                FullExportTitle = "Full export",
-                ExportJson = "Export JSON",
-                ExportCsv = "Export CSV",
-                ExportBoth = "Export Both",
-                ChangesExportTitle = "Changes export",
-                ChangesHelp = "Exports only differences compared with the saved baseline.",
-                ExportChangesJson = "Changes JSON",
-                ExportChangesCsv = "Changes CSV",
-                ExportChangesBoth = "Changes Both",
-                BaselineTitle = "Baseline",
-                BaselineNotFound = "Baseline: not found. Run a full export, set current baseline, or import an old full JSON export.",
-                BaselineReadyPrefix = "Baseline: ",
-                BaselineReadyMiddle = " cards, ",
-                SetBaseline = "Set current",
-                ImportBaseline = "Import JSON",
-                ClearBaseline = "Clear",
-                Status = "Status",
-                PrivacyNote = "Local export by Manacost. No collection data is sent to external services.",
-                FolderDialogDescription = "Select collection export folder",
-                Ready = "Ready.",
-                Exporting = "Exporting collection...",
-                ExportingChanges = "Exporting collection changes...",
-                SuccessPrefix = "Success: exported ",
-                SuccessMiddle = " cards to ",
-                ChangesSuccessPrefix = "Success: exported ",
-                ChangesSuccessMiddle = " changes to ",
-                BaselineCreated = "Baseline was created from the current collection. Make collection changes, then export changes again.",
-                BaselineSavedPrefix = "Baseline saved: ",
-                BaselineSavedSuffix = " cards.",
-                BaselineImportedPrefix = "Baseline imported: ",
-                BaselineCleared = "Baseline cleared.",
-                ImportBaselineDialogTitle = "Select full collection JSON export",
-                ImportBaselineFailedPrefix = "Could not import baseline: ",
-                ErrorPrefix = "Error: ",
-                NoPreviousExport = "No previous export was found. Run Export Both once before exporting changes.",
-                CannotWrite = "Cannot write to the output folder: ",
-                FileExportFailed = "File export failed: ",
-                ExportFailed = "Export failed: ",
-                LastExportNever = "Last export: never",
-                LastExportPrefix = "Last export: "
-            };
+                // Read HDT's language when available; the system is the fallback.
+                var config = Hearthstone_Deck_Tracker.Config.Instance;
+                var member = config.GetType().GetField("Language");
+                if(member != null) culture = Convert.ToString(member.GetValue(config));
+            }
+            return language == "ru" || (language != "en" && (culture ?? "").StartsWith("ru", StringComparison.OrdinalIgnoreCase)) ? Russian() : English();
         }
-
-        public static ExportWindowText Russian()
+        public string this[string key]
         {
-            return new ExportWindowText
-            {
-                WindowTitle = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438 \u043e\u0442 Manacost",
-                HeaderTitle = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438",
-                BrandLine = "\u043e\u0442 \u043a\u043e\u043c\u0430\u043d\u0434\u044b Manacost",
-                HeaderDescription = "\u041b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0439 \u044d\u043a\u0441\u043f\u043e\u0440\u0442 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438 \u0432 JSON, CSV \u0438 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f \u0441 \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0435\u0433\u043e baseline.",
-                OutputFolder = "\u041f\u0430\u043f\u043a\u0430 \u044d\u043a\u0441\u043f\u043e\u0440\u0442\u0430",
-                Browse = "\u0412\u044b\u0431\u0440\u0430\u0442\u044c...",
-                OptionsTitle = "\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438 \u044d\u043a\u0441\u043f\u043e\u0440\u0442\u0430",
-                IncludeCardNames = "\u0434\u043e\u0431\u0430\u0432\u043b\u044f\u0442\u044c \u043d\u0430\u0437\u0432\u0430\u043d\u0438\u044f \u043a\u0430\u0440\u0442",
-                IncludeGoldenCount = "\u0434\u043e\u0431\u0430\u0432\u043b\u044f\u0442\u044c \u0437\u043e\u043b\u043e\u0442\u044b\u0435/\u043f\u0440\u0435\u043c\u0438\u0443\u043c \u043a\u0430\u0440\u0442\u044b",
-                IncludeMetadata = "\u0434\u043e\u0431\u0430\u0432\u043b\u044f\u0442\u044c \u043c\u0435\u0442\u0430\u0434\u0430\u043d\u043d\u044b\u0435",
-                FullExportTitle = "\u041f\u043e\u043b\u043d\u044b\u0439 \u044d\u043a\u0441\u043f\u043e\u0440\u0442",
-                ExportJson = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 JSON",
-                ExportCsv = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 CSV",
-                ExportBoth = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043e\u0431\u0430",
-                ChangesExportTitle = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439",
-                ChangesHelp = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442\u0438\u0440\u0443\u0435\u0442 \u0442\u043e\u043b\u044c\u043a\u043e \u043e\u0442\u043b\u0438\u0447\u0438\u044f \u043e\u0442 \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u043d\u043e\u0433\u043e baseline.",
-                ExportChangesJson = "\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f JSON",
-                ExportChangesCsv = "\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f CSV",
-                ExportChangesBoth = "\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f: \u043e\u0431\u0430",
-                BaselineTitle = "Baseline",
-                BaselineNotFound = "Baseline: \u043d\u0435 \u043d\u0430\u0439\u0434\u0435\u043d. \u041d\u0430\u0436\u043c\u0438\u0442\u0435 \u043f\u043e\u043b\u043d\u044b\u0439 \u044d\u043a\u0441\u043f\u043e\u0440\u0442 \u0438\u043b\u0438 Set current.",
-                BaselineReadyPrefix = "Baseline: ",
-                BaselineReadyMiddle = " \u043a\u0430\u0440\u0442, ",
-                SetBaseline = "\u0422\u0435\u043a\u0443\u0449\u0430\u044f \u0431\u0430\u0437\u0430",
-                ImportBaseline = "\u0418\u043c\u043f\u043e\u0440\u0442 JSON",
-                ClearBaseline = "\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c",
-                Status = "\u0421\u0442\u0430\u0442\u0443\u0441",
-                PrivacyNote = "\u041b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0439 \u044d\u043a\u0441\u043f\u043e\u0440\u0442 \u043e\u0442 Manacost. \u0414\u0430\u043d\u043d\u044b\u0435 \u043d\u0435 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u044f\u044e\u0442\u0441\u044f \u0432\u043e \u0432\u043d\u0435\u0448\u043d\u0438\u0435 \u0441\u0435\u0440\u0432\u0438\u0441\u044b.",
-                FolderDialogDescription = "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u0430\u043f\u043a\u0443 \u0434\u043b\u044f \u044d\u043a\u0441\u043f\u043e\u0440\u0442\u0430 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438",
-                Ready = "\u0413\u043e\u0442\u043e\u0432\u043e.",
-                Exporting = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438...",
-                ExportingChanges = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438...",
-                SuccessPrefix = "\u0423\u0441\u043f\u0435\u0448\u043d\u043e: \u044d\u043a\u0441\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u043e ",
-                SuccessMiddle = " \u043a\u0430\u0440\u0442 \u0432 ",
-                ChangesSuccessPrefix = "\u0423\u0441\u043f\u0435\u0448\u043d\u043e: \u044d\u043a\u0441\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u043d\u043e ",
-                ChangesSuccessMiddle = " \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439 \u0432 ",
-                BaselineCreated = "Baseline \u0441\u043e\u0437\u0434\u0430\u043d \u0438\u0437 \u0442\u0435\u043a\u0443\u0449\u0435\u0439 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438. \u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u044f \u0431\u0443\u0434\u0443\u0442 \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u044b \u043f\u043e\u0441\u043b\u0435 \u0441\u043b\u0435\u0434\u0443\u044e\u0449\u0438\u0445 \u0438\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0439 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438.",
-                BaselineSavedPrefix = "Baseline \u0441\u043e\u0445\u0440\u0430\u043d\u0435\u043d: ",
-                BaselineSavedSuffix = " \u043a\u0430\u0440\u0442.",
-                BaselineImportedPrefix = "Baseline \u0438\u043c\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u043d: ",
-                BaselineCleared = "Baseline \u043e\u0447\u0438\u0449\u0435\u043d.",
-                ImportBaselineDialogTitle = "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043f\u043e\u043b\u043d\u044b\u0439 JSON \u044d\u043a\u0441\u043f\u043e\u0440\u0442 \u043a\u043e\u043b\u043b\u0435\u043a\u0446\u0438\u0438",
-                ImportBaselineFailedPrefix = "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0438\u043c\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c baseline: ",
-                ErrorPrefix = "\u041e\u0448\u0438\u0431\u043a\u0430: ",
-                NoPreviousExport = "\u041d\u0435\u0442 \u043f\u0440\u0435\u0434\u044b\u0434\u0443\u0449\u0435\u0433\u043e \u044d\u043a\u0441\u043f\u043e\u0440\u0442\u0430. \u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0441\u0434\u0435\u043b\u0430\u0439\u0442\u0435 \u043f\u043e\u043b\u043d\u044b\u0439 \u044d\u043a\u0441\u043f\u043e\u0440\u0442.",
-                CannotWrite = "\u041d\u0435\u0442 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043d\u0430 \u0437\u0430\u043f\u0438\u0441\u044c \u0432 \u043f\u0430\u043f\u043a\u0443: ",
-                FileExportFailed = "\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u043f\u0438\u0441\u0430\u0442\u044c \u0444\u0430\u0439\u043b: ",
-                ExportFailed = "\u042d\u043a\u0441\u043f\u043e\u0440\u0442 \u043d\u0435 \u0432\u044b\u043f\u043e\u043b\u043d\u0435\u043d: ",
-                LastExportNever = "\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0439 \u044d\u043a\u0441\u043f\u043e\u0440\u0442: \u043d\u0438\u043a\u043e\u0433\u0434\u0430",
-                LastExportPrefix = "\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0439 \u044d\u043a\u0441\u043f\u043e\u0440\u0442: "
-            };
+            get { string[] values; return Words.TryGetValue(key, out values) ? values[IsRussian ? 0 : 1] : key; }
         }
+        public object GroupDisplay(CollectionGroup group, bool rarity)
+        {
+            var code = (group.Name ?? "").ToUpperInvariant();
+            string title;
+            if(string.IsNullOrEmpty(code)) title = IsRussian ? "Другие" : "Other";
+            else if(rarity && Words.ContainsKey("Rarity" + code)) title = this["Rarity" + code];
+            else if(IsRussian && SetNames.TryGetValue(code, out title)) { }
+            else title = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(code.Replace('_', ' ').ToLowerInvariant());
+            var culture = CultureInfo.GetCultureInfo(IsRussian ? "ru-RU" : "en-US");
+            var detail = group.Total > 0 ? string.Format(culture, IsRussian ? "{0:N0} из {1:N0} карт · {2:P0}" : "{0:N0} of {1:N0} cards · {2:P0}", group.CatalogOwned, group.Total, (double)group.CatalogOwned / group.Total)
+                : string.Format(culture, IsRussian ? "{0:N0} уникальных карт" : "{0:N0} unique cards", group.Cards);
+            return new { Title = title, Detail = detail + string.Format(culture, IsRussian ? "\n{0:N0} копий" : "\n{0:N0} copies", group.Copies), Completion = group.Total > 0 ? 100.0 * group.CatalogOwned / group.Total : 0.0 };
+        }
+        private static readonly Dictionary<string, string> SetNames = new Dictionary<string, string>
+        {
+            {"CORE", "Основной набор"},
+            {"VANILLA", "Базовый набор"},
+            {"LEGACY", "Старый набор"},
+            {"LETTUCE", "Наемники"},
+            {"EXPERT1", "Классический набор"},
+            {"EVENT", "Событийные карты"},
+            {"HERO_SKINS", "Портреты героев"},
+            {"PLACEHOLDER_202204", "Основной набор"},
+            {"NAXX", "Проклятие Наксрамаса"},
+            {"FP1", "Проклятие Наксрамаса"},
+            {"GVG", "Гоблины и гномы"},
+            {"PE1", "Гоблины и гномы"},
+            {"BRM", "Чёрная гора"},
+            {"FP2", "Чёрная гора"},
+            {"BLACKROCK_MOUNTAIN", "Чёрная гора"},
+            {"TGT", "Большой турнир"},
+            {"TEMP1", "Большой турнир"},
+            {"LOE", "Лига исследователей"},
+            {"OG", "Пробуждение древних богов"},
+            {"OLD_GODS", "Пробуждение древних богов"},
+            {"KARA", "Вечеринка в Каражане"},
+            {"GANGS", "Злачный город Прибамбасск"},
+            {"GADGETZAN", "Злачный город Прибамбасск"},
+            {"UNGORO", "Экспедиция в Ун’Горо"},
+            {"ICECROWN", "Рыцари Ледяного Трона"},
+            {"LOOTAPALOOZA", "Кобольды и катакомбы"},
+            {"GILNEAS", "Ведьмин лес"},
+            {"BOOMSDAY", "Проект Бумного Дня"},
+            {"TROLL", "Растахановы игрища"},
+            {"DALARAN", "Возмездие теней"},
+            {"ULDUM", "Спасители Ульдума"},
+            {"DRAGONS", "Натиск драконов"},
+            {"YEAR_OF_THE_DRAGON", "Пробуждение Галакронда"},
+            {"BLACK_TEMPLE", "Руины Запределья"},
+            {"DEMON_HUNTER_INITIATE", "Руины Запределья"},
+            {"SCHOLOMANCE", "Некроситет"},
+            {"DARKMOON_FAIRE", "Ярмарка безумия"},
+            {"THE_BARRENS", "Закаленные Степями"},
+            {"STORMWIND", "Сплоченные Штормградом"},
+            {"ALTERAC_VALLEY", "Разделенные Альтераком"},
+            {"THE_SUNKEN_CITY", "Путешествие в Затонувший город"},
+            {"REVENDRETH", "Убийство в замке Нафрия"},
+            {"RETURN_OF_THE_LICH_KING", "Марш Короля-лича"},
+            {"PATH_OF_ARTHAS", "Марш Короля-лича"},
+            {"BATTLE_OF_THE_BANDS", "Фестиваль легенд"},
+            {"TITANS", "ТИТАНЫ"},
+            {"WILD_WEST", "Битва в Бесплодных землях"},
+            {"WHIZBANGS_WORKSHOP", "Мастерская Чудастера"},
+            {"ISLAND_VACATION", "Раздор в тропиках"},
+            {"SPACE", "Великая Запредельная Тьма"},
+            {"EMERALD_DREAM", "Объятия Изумрудного Сна"},
+            {"THE_LOST_CITY", "Затерянный город Ун'Горо"},
+            {"TIME_TRAVEL", "Сквозь потоки времени"},
+            {"WONDERS", "Пещеры времени"},
+            {"CATACLYSM", "Катаклизм"},
+        };
+        private static readonly IDictionary<string, string[]> Words = new Dictionary<string, string[]>
+        {
+            {"RarityCOMMON", new[]{"Обычные", "Common"}},
+            {"RarityRARE", new[]{"Редкие", "Rare"}},
+            {"RarityEPIC", new[]{"Эпические", "Epic"}},
+            {"RarityLEGENDARY", new[]{"Легендарные", "Legendary"}},
+            {"RarityFREE", new[]{"Бесплатные", "Free"}},
+            {"Title",new[]{"Ваша коллекция", "Your collection"}},
+            {"Subtitle",new[]{"Снимки Hearthstone. Всё хранится на вашем компьютере.", "Hearthstone snapshots. Everything stays on your computer."}},
+            {"Refresh",new[]{"↻  Обновить", "↻  Refresh"}},
+            {"Unique",new[]{"УНИКАЛЬНЫЕ КАРТЫ", "UNIQUE CARDS"}},
+            {"Copies",new[]{"КОПИИ", "COPIES"}},
+            {"Premium",new[]{"ПРЕМИАЛЬНЫЕ", "PREMIUM"}},
+            {"Dust",new[]{"ПЫЛЬ", "DUST"}},
+            {"Account",new[]{"Ожидание коллекции", "Waiting for collection"}},
+            {"Waiting",new[]{"Ожидание", "Waiting"}},
+            {"Ready",new[]{"Данные из HDT", "Data from HDT"}},
+            {"Stale",new[]{"Обновите снимок", "Refresh snapshot"}},
+            {"Export",new[]{"Экспорт", "Export"}},
+            {"History",new[]{"История", "History"}},
+            {"Summary",new[]{"По наборам", "By set"}},
+            {"Heading",new[]{"Сохранить коллекцию", "Save collection"}},
+            {"Mode",new[]{"РЕЖИМ", "MODE"}},
+            {"Format",new[]{"ФОРМАТ", "FORMAT"}},
+            {"Full",new[]{"Полная коллекция", "Full collection"}},
+            {"Changes",new[]{"Изменения с прошлого снимка", "Changes since previous snapshot"}},
+            {"Folder",new[]{"ПАПКА СОХРАНЕНИЯ", "DESTINATION FOLDER"}},
+            {"Browse",new[]{"Выбрать…", "Browse…"}},
+            {"Save",new[]{"Сохранить снимок  →", "Save snapshot  →"}},
+            {"SaveChanges",new[]{"Сохранить изменения  →", "Save changes  →"}},
+            {"CreateBaseline",new[]{"Создать первый снимок  →", "Create first snapshot  →"}},
+            {"Advanced",new[]{"Настройки и база сравнения", "Options and comparison baseline"}},
+            {"Names",new[]{"Названия карт", "Card names"}},
+            {"PremiumCsv",new[]{"Золотые копии в столбце CSV", "Golden copies in CSV column"}},
+            {"Metadata",new[]{"Набор, редкость и класс", "Set, rarity and class"}},
+            {"OptionsHint",new[]{"JSON всегда сохраняет реальные счётчики. Настройки не меняют историю и сравнение.", "JSON always retains actual counts. Options never alter history or comparisons."}},
+            {"SetBaseline",new[]{"Текущая как база", "Use current as baseline"}},
+            {"Import",new[]{"Импорт JSON…", "Import JSON…"}},
+            {"Clear",new[]{"Сбросить базу", "Reset baseline"}},
+            {"HistoryHint",new[]{"Каждый успешный экспорт сохраняет полный снимок. Выберите две даты одного аккаунта.", "Every successful export saves a full snapshot. Choose two dates for the same account."}},
+            {"Earlier",new[]{"РАНЬШЕ", "EARLIER"}},
+            {"Later",new[]{"ПОЗЖЕ", "LATER"}},
+            {"Compare",new[]{"Экспорт сравнения", "Export comparison"}},
+            {"HistoryBaseline",new[]{"Выбранный как база", "Use selected baseline"}},
+            {"OpenHistory",new[]{"Папка истории", "History folder"}},
+            {"Prune",new[]{"Оставить 30 последних…", "Keep latest 30…"}},
+            {"PruneConfirm",new[]{"Удалить старые снимки, оставив 30 последних и действующую базу? Выгрузки в папке экспорта сохранятся.", "Delete older snapshots, keeping the latest 30 and the active baseline? Exported files will remain."}},
+            {"Storage",new[]{"Снимков: {0} · {1:N1} МБ · автоматическое удаление отключено", "Snapshots: {0} · {1:N1} MB · automatic removal is off"}},
+            {"SummaryHint",new[]{"Постоянные карты: уникальные / копии. Пробные копии: {0:N0}. Процент полноты требует каталога всех доступных карт.", "Permanent cards: unique / copies. Trial copies: {0:N0}. Completion percentage requires the full available-card catalog."}},
+            {"SummaryCatalog",new[]{"Уникальные / каталог HDT · постоянные копии. Пробные копии: {0:N0}. Основной набор и служебные наборы исключены из сводки.", "Unique / HDT catalog · permanent copies. Trial copies: {0:N0}. Core and special sets are excluded from this summary."}},
+            {"Sets",new[]{"Наборы", "Sets"}},
+            {"Rarities",new[]{"Редкости", "Rarities"}},
+            {"ReadTime",new[]{"Получено {0} · пробные копии учитываются отдельно", "Read {0} · trial copies are counted separately"}},
+            {"PreviewFull",new[]{"{0:N0} уникальных карт · {1:N0} постоянных копий. Сводка и файл используют один снимок.", "{0:N0} unique cards · {1:N0} permanent copies. Preview and file use the same snapshot."}},
+            {"PreviewChanges",new[]{"Изменений: {0} · добавлено карт: {1} · удалено: {2} · изменено: {3}", "Changes: {0} · cards added: {1} · removed: {2} · changed: {3}"}},
+            {"FirstHint",new[]{"Сначала сохраним полную базу. Файл изменений появится при следующем сравнении.", "First, save a full baseline. A changes file can be created on the next comparison."}},
+            {"LegacyCountsUnknown",new[]{"Старый снимок сохранён, но полнота счётчиков неизвестна. Создайте новую базу.", "The old snapshot is preserved, but count completeness is unknown. Create a new baseline."}},
+            {"CorruptBaseline",new[]{"База повреждена. Выберите снимок из истории, импортируйте JSON или сохраните текущую как базу.", "The baseline is damaged. Import JSON or use the current collection as the baseline."}},
+            {"Reading",new[]{"Читаю коллекцию из HDT…", "Reading collection from HDT…"}},
+            {"Saving",new[]{"Подготавливаю и сохраняю файлы…", "Preparing and saving files…"}},
+            {"WaitingGame",new[]{"Запустите Hearthstone и войдите в аккаунт. Коллекция появится после чтения HDT.", "Start Hearthstone and log in. The collection will appear after HDT reads it."}},
+            {"WaitingRead",new[]{"HDT пока не получил коллекцию. Следующая попытка через 15 секунд; можно обновить вручную.", "HDT has not received the collection yet. Retrying in 15 seconds; you can also refresh manually."}},
+            {"Failed",new[]{"Операция не завершена. Проверьте аккаунт, базу сравнения и доступ к папке. Подробности: {0}", "The operation failed. Check the account, baseline and destination access. Details: {0}"}},
+            {"Saved",new[]{"Сохранено файлов: {0} · {1}. Полный снимок добавлен в историю.", "Files saved: {0} · {1}. A full snapshot was added to history."}},
+            {"HistorySaved",new[]{"Сравнение сохранено: {0} файла · {1}. База сравнения сохранена без изменений.", "Comparison saved: {0} files · {1}. Baseline unchanged."}},
+            {"BaselineSaved",new[]{"База сохранена. Файл изменений не создавался.", "Baseline saved. No changes file was created."}},
+            {"BaselineSaveFailed",new[]{"Файлы экспорта сохранены, но база и история не обновлены. Проверьте доступ к папке данных.", "Export files were saved, but baseline/history were not updated. Check data-folder access."}},
+            {"Partial",new[]{"Часть файлов сохранена: {0}. База не обновлена. Повторите экспорт после проверки папки.", "Some files were saved: {0}. Baseline was not advanced. Check the folder and retry."}},
+            {"Cancelled",new[]{"Операция отменена.", "Operation cancelled."}},
+            {"Cancel",new[]{"Отмена", "Cancel"}},
+            {"OpenFolder",new[]{"Открыть папку", "Open folder"}},
+            {"ShowFile",new[]{"Показать файл", "Show file"}},
+            {"CopyPath",new[]{"Копировать путь", "Copy path"}},
+            {"Copied",new[]{"Путь скопирован.", "Path copied."}},
+            {"Imported",new[]{"Снимок импортирован. Для точного сравнения создайте новую базу с полными счётчиками.", "Snapshot imported. Create a new baseline with complete counts for accurate comparison."}},
+            {"Cleared",new[]{"База сброшена. История сохранена.", "Baseline reset. History retained."}},
+            {"ChooseHistory",new[]{"Выберите два действительных снимка: сначала ранний, затем поздний.", "Choose two valid snapshots: earlier first, then later."}},
+            {"SettingsRecovery",new[]{"Настройки восстановлены по умолчанию.", "Default settings restored."}},
+            {"SettingsSaveFailed",new[]{"Не удалось сохранить настройки. Проверьте доступ к папке данных HDT.", "Settings could not be saved. Check access to HDT's data folder."}}
+        };
     }
 }

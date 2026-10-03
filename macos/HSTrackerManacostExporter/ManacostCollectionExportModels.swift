@@ -2,8 +2,8 @@ import Foundation
 
 struct ManacostUserProfileRecord: Codable, Equatable {
     let battleTag: String
-    let accountHi: Int64
-    let accountLo: Int64
+    let accountHi: UInt64
+    let accountLo: UInt64
 }
 
 struct ManacostFavoriteHeroRecord: Codable, Equatable {
@@ -134,7 +134,7 @@ struct ManacostCollectionExportDocument: Codable {
     let exportedAt: String
     let source: String
     let version: Int
-    let user: ManacostUserProfileRecord?
+    let user: ManacostUserProfileRecord
     let dust: Int
     let cardBacks: [Int]
     let favoriteCardBack: Int
@@ -149,7 +149,7 @@ struct ManacostCollectionExportDocument: Codable {
         exportedAt: String,
         source: String,
         version: Int,
-        user: ManacostUserProfileRecord?,
+        user: ManacostUserProfileRecord,
         dust: Int,
         cardBacks: [Int],
         favoriteCardBack: Int,
@@ -185,7 +185,7 @@ struct ManacostCollectionExportDocument: Codable {
         exportedAt = try container.decodeIfPresent(String.self, forKey: .exportedAt) ?? ""
         source = try container.decodeIfPresent(String.self, forKey: .source) ?? ""
         version = try container.decodeIfPresent(Int.self, forKey: .version) ?? 1
-        user = try container.decodeIfPresent(ManacostUserProfileRecord.self, forKey: .user)
+        user = try container.decode(ManacostUserProfileRecord.self, forKey: .user)
         dust = try container.decodeIfPresent(Int.self, forKey: .dust) ?? 0
         cardBacks = try container.decodeIfPresent([Int].self, forKey: .cardBacks) ?? []
         favoriteCardBack = try container.decodeIfPresent(Int.self, forKey: .favoriteCardBack) ?? 0
