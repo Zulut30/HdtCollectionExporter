@@ -376,11 +376,11 @@ final class ManacostCollectionExporter {
         let favoriteCardBackChange = previous.favoriteCardBack == current.favoriteCardBack
             ? nil
             : numericChange(previous: previous.favoriteCardBack, current: current.favoriteCardBack)
-        let userChange = previous.user.accountHi == current.user.accountHi && previous.user.accountLo == current.user.accountLo ? nil : ManacostValueChange(previous: previous.user, current: current.user)
-        let favoriteClassChange = previous.favoriteClass == current.favoriteClass
+        let userChange: ManacostValueChange<ManacostUserProfileRecord>? = previous.user.accountHi == current.user.accountHi && previous.user.accountLo == current.user.accountLo ? nil : ManacostValueChange(previous: previous.user, current: current.user)
+        let favoriteClassChange: ManacostValueChange<ManacostFavoriteClassRecord>? = previous.favoriteClass == current.favoriteClass
             ? nil
             : ManacostValueChange(previous: previous.favoriteClass, current: current.favoriteClass)
-        let bestClassByWinsChange = previous.bestClassByWins == current.bestClassByWins
+        let bestClassByWinsChange: ManacostValueChange<ManacostFavoriteClassRecord>? = previous.bestClassByWins == current.bestClassByWins
             ? nil
             : ManacostValueChange(previous: previous.bestClassByWins, current: current.bestClassByWins)
 
@@ -550,10 +550,14 @@ final class ManacostCollectionExporter {
     ) -> ManacostFavoriteHeroesDelta {
         let old = favoriteHeroLookup(previous)
         let new = favoriteHeroLookup(current)
-        let added = new.filter { !old.keys.contains($0.key) }.map { $0.value }
-            .sorted { $0.heroKey == $1.heroKey ? $0.dbfId < $1.dbfId : $0.heroKey < $1.heroKey }
-        let removed = old.filter { !new.keys.contains($0.key) }.map { $0.value }
-            .sorted { $0.heroKey == $1.heroKey ? $0.dbfId < $1.dbfId : $0.heroKey < $1.heroKey }
+        var added: [ManacostFavoriteHeroRecord] = []
+        var removed: [ManacostFavoriteHeroRecord] = []
+        for (key, value) in new where old[key] == nil { added.append(value) }
+        for (key, value) in old where new[key] == nil { removed.append(value) }
+        let ordered: (ManacostFavoriteHeroRecord, ManacostFavoriteHeroRecord) -> Bool = { a, b in
+            a.heroKey == b.heroKey ? a.dbfId < b.dbfId : a.heroKey < b.heroKey
+        }
+        added.sort(by: ordered); removed.sort(by: ordered)
         return ManacostFavoriteHeroesDelta(added: added, removed: removed)
     }
 
@@ -676,7 +680,7 @@ final class ManacostCollectionExporter {
             "changeType,cardId,dbfId,name,set,rarity,class,normalDelta,goldenDelta,ownedTotalDelta,previousNormal,previousGolden,previousOwnedTotal,currentNormal,currentGolden,currentOwnedTotal"
         ]
         for change in changes {
-            lines.append([
+            let fields: [String] = [
                 change.changeType,
                 change.cardId,
                 String(change.dbfId),
@@ -693,7 +697,8 @@ final class ManacostCollectionExporter {
                 String(change.current?.normal ?? 0),
                 String(change.current?.golden ?? 0),
                 String(change.current?.ownedTotal ?? 0)
-            ].map(Self.escapeCSV).joined(separator: ","))
+            ]
+            lines.append(fields.map(Self.escapeCSV).joined(separator: ","))
         }
         if let data = lines.joined(separator: "\n").data(using: .utf8) {
             try data.write(to: url, options: [.atomic])
@@ -753,6 +758,8 @@ private struct ManacostClassStatBuilder {
     private(set) var ties = 0
     private var recordTypes = [Int: ManacostClassRecordTypeBuilder]()
 
+    init(cardClass: String) { self.cardClass = cardClass }
+
     mutating func add(type: Int, record: ManacostPlayerRecordEntry) {
         wins += record.wins
         losses += record.losses
@@ -783,6 +790,8 @@ private struct ManacostClassRecordTypeBuilder {
     private(set) var losses = 0
     private(set) var ties = 0
     private var heroDbfIds = Set<Int>()
+
+    init(type: Int) { self.type = type }
 
     mutating func add(_ record: ManacostPlayerRecordEntry) {
         wins += record.wins
