@@ -134,7 +134,7 @@ struct ManacostCollectionExportDocument: Codable {
     let exportedAt: String
     let source: String
     let version: Int
-    let user: ManacostUserProfileRecord?
+    let user: ManacostUserProfileRecord
     let dust: Int
     let cardBacks: [Int]
     let favoriteCardBack: Int

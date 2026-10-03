@@ -7,7 +7,7 @@
   <SolidColorBrush x:Key="Muted" Color="#9AA6B7"/>
   <SolidColorBrush x:Key="Gold" Color="#E8BD71"/>
   <Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style>
-  <Style x:Key="Label" TargetType="TextBlock"><Setter Property="Foreground" Value="{StaticResource Muted}"/><Setter Property="FontSize" Value="12"/><Setter Property="Margin" Value="0,0,0,8"/></Style>
+  <Style x:Key="Label" TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="Foreground" Value="{StaticResource Muted}"/><Setter Property="FontSize" Value="12"/><Setter Property="Margin" Value="0,0,0,8"/></Style>
   <Style TargetType="Button">
    <Setter Property="Foreground" Value="#E9EDF4"/><Setter Property="Background" Value="#252E3E"/>
    <Setter Property="Padding" Value="16,11"/><Setter Property="Cursor" Value="Hand"/><Setter Property="Margin" Value="0,0,8,0"/>
