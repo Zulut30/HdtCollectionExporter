@@ -43,6 +43,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Parse adapter and AppKit menu
         run: swiftc -frontend -parse macos/HSTrackerManacostExporter/*.swift
+      - name: Typecheck export adapter boundary
+        run: swiftc -typecheck macos/HSTrackerManacostExporter/ManacostCollectionExportModels.swift macos/HSTrackerManacostExporter/ManacostSnapshotStore.swift macos/HSTrackerManacostExporter/ManacostCollectionExporter.swift tests/macos/HSTrackerStubs.swift
       - name: Shared schema and storage fixture
         run: |
           swiftc macos/HSTrackerManacostExporter/ManacostCollectionExportModels.swift macos/HSTrackerManacostExporter/ManacostSnapshotStore.swift tests/macos/main.swift -o /tmp/manacost-fixture-tests

@@ -32,6 +32,12 @@
   </Style>
   <Style TargetType="ListBox"><Setter Property="Background" Value="#171E29"/><Setter Property="Foreground" Value="#DAE2ED"/><Setter Property="BorderBrush" Value="#303B4B"/><Setter Property="Padding" Value="5"/><Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/></Style>
   <Style TargetType="ListBoxItem"><Setter Property="Padding" Value="10,8"/><Setter Property="HorizontalContentAlignment" Value="Stretch"/></Style>
+  <DataTemplate x:Key="SummaryRow">
+   <StackPanel Margin="0,2,0,6"><TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
+    <TextBlock Text="{Binding Detail}" Foreground="#9AA6B7" FontSize="12" Margin="0,5,0,8"/>
+    <ProgressBar Value="{Binding Completion}" Maximum="100" Height="3" Foreground="#E8BD71" Background="#303B4B"/>
+   </StackPanel>
+  </DataTemplate>
   <Style x:Key="Panel" TargetType="Border"><Setter Property="Background" Value="#1A2230"/><Setter Property="BorderBrush" Value="#2C384A"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="12"/><Setter Property="Padding" Value="20"/></Style>
  </Window.Resources>
  <Grid Margin="26,20,26,20">
@@ -85,8 +91,8 @@
    <TabItem x:Name="SummaryTab"><ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel>
     <TextBlock x:Name="SummaryHint" Style="{StaticResource Label}"/>
     <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-     <StackPanel Margin="0,0,12,0"><TextBlock x:Name="SetsLabel" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,12"/><ListBox x:Name="SetsList" Height="245"/></StackPanel>
-     <StackPanel Grid.Column="1"><TextBlock x:Name="RaritiesLabel" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,12"/><ListBox x:Name="RaritiesList" Height="245"/></StackPanel>
+     <StackPanel Margin="0,0,12,0"><TextBlock x:Name="SetsLabel" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,12"/><ListBox x:Name="SetsList" Height="245" ItemTemplate="{StaticResource SummaryRow}"/></StackPanel>
+     <StackPanel Grid.Column="1"><TextBlock x:Name="RaritiesLabel" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,12"/><ListBox x:Name="RaritiesList" Height="245" ItemTemplate="{StaticResource SummaryRow}"/></StackPanel>
     </Grid>
    </StackPanel></ScrollViewer></TabItem>
   </TabControl>

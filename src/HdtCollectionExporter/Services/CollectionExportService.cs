@@ -210,7 +210,7 @@ namespace HdtCollectionExporter.Services
 
         private static CollectionExportDocument ToDocument(CollectionSnapshot snapshot, DateTimeOffset exportedAt)
         {
-            return new CollectionExportDocument
+            var document = new CollectionExportDocument
             {
                 ExportedAt = exportedAt.ToString("o", CultureInfo.InvariantCulture),
                 Source = ExportSource,
@@ -230,6 +230,9 @@ namespace HdtCollectionExporter.Services
                     .ThenBy(card => card.CardId)
                     .ToList()
             };
+            // Freeze account and non-card records as well as inventory counts:
+            // HDT may refresh its mutable objects while the preview is displayed.
+            return JsonConvert.DeserializeObject<CollectionExportDocument>(SnapshotStore.Serialize(document));
         }
 
         private static IList<string> BuildBaselineCandidatePaths(

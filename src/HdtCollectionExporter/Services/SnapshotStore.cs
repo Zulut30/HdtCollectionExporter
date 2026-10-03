@@ -28,7 +28,8 @@ namespace HdtCollectionExporter.Services
         public long Bytes { get; set; }
         public bool IsValid { get; set; }
         public bool CompleteCounts { get; set; }
-        public override string ToString() { return Date + "   ·   " + Cards.ToString("N0") + (IsValid ? "" : "   ⚠"); }
+        public DateTimeOffset SortTime { get { DateTimeOffset parsed; return DateTimeOffset.TryParse(Date, CultureInfo.InvariantCulture, DateTimeStyles.None, out parsed) ? parsed : DateTimeOffset.MinValue; } }
+        public override string ToString() { return (SortTime == DateTimeOffset.MinValue ? Date : SortTime.LocalDateTime.ToString("g")) + "   ·   " + Cards.ToString("N0") + (IsValid ? "" : "   ⚠"); }
     }
 
     public sealed class SnapshotStore
@@ -120,7 +121,7 @@ namespace HdtCollectionExporter.Services
             {
                 try { var snapshot = Read(path); RequireSameAccount(user, snapshot.Document.User); return Entry(path, snapshot); }
                 catch { return new HistoryEntry { Path = path, Date = Path.GetFileNameWithoutExtension(path), Bytes = new FileInfo(path).Length, IsValid = false }; }
-            }).OrderByDescending(entry => entry.Date, StringComparer.Ordinal).ToList();
+            }).OrderByDescending(entry => entry.SortTime).ThenByDescending(entry => entry.Path, StringComparer.Ordinal).ToList();
         }
 
         public HistoryEntry Import(string path, UserProfileRecord currentUser)
@@ -174,7 +175,7 @@ namespace HdtCollectionExporter.Services
         }
         private static HistoryEntry Entry(string path, StoredSnapshot snapshot)
         {
-            return new HistoryEntry { Path = path, Date = snapshot.Document.ExportedAt, Cards = snapshot.Document.Cards.Count,
+            return new HistoryEntry { Path = path, Date = snapshot.Document.ExportedAt, Cards = snapshot.Document.Cards.Count(c => c.OwnedTotal > 0),
                 Bytes = new FileInfo(path).Length, IsValid = true, CompleteCounts = snapshot.CompleteCounts };
         }
         public static string Serialize(object value) { return JsonConvert.SerializeObject(value, Formatting.Indented); }

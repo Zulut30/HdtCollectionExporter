@@ -1,8 +1,12 @@
 ﻿param(
-    [string]$PluginPath = (Join-Path (Split-Path $PSScriptRoot) 'src\HdtCollectionExporter\bin\x64\Release\HdtCollectionExporter.dll'),
+    [string]$PluginPath,
     [string]$DataDirectory = (Join-Path $env:APPDATA 'HearthstoneDeckTracker')
 )
 $ErrorActionPreference = 'Stop'
+if([string]::IsNullOrWhiteSpace($PluginPath)) {
+    $bundledPlugin = Join-Path $PSScriptRoot 'HdtCollectionExporter.dll'
+    $PluginPath = if(Test-Path -LiteralPath $bundledPlugin) { $bundledPlugin } else { Join-Path (Split-Path $PSScriptRoot) 'src\HdtCollectionExporter\bin\x64\Release\HdtCollectionExporter.dll' }
+}
 if(Get-Process HearthstoneDeckTracker -ErrorAction SilentlyContinue) { throw 'Fully close HDT before installing; settings and DLLs may otherwise be overwritten.' }
 $PluginPath = (Resolve-Path -LiteralPath $PluginPath).Path
 $pluginsDir = Join-Path $DataDirectory 'Plugins'

@@ -72,10 +72,16 @@ namespace HdtCollectionExporter.Tests
         }
         [TestMethod] public async Task PreviewAndExportUseSameSnapshot()
         {
+            _provider.Snapshot.CardBacks = new List<int>();
             var preview = await Prepare();
             _provider.Snapshot.Cards[0].Normal = 12;
+            _provider.Snapshot.User.BattleTag = "Later#0002";
+            _provider.Snapshot.CardBacks.Add(77);
             var result = await _service.ExportPreparedAsync(preview, false, ExportFormat.Json, Options, CancellationToken.None);
             Assert.AreEqual(2, JObject.Parse(File.ReadAllText(result.Files[0]))["cards"][0].Value<int>("normal"));
+            var document = JObject.Parse(File.ReadAllText(result.Files[0]));
+            Assert.AreEqual("Fixture#0001", document["user"].Value<string>("battleTag"));
+            Assert.AreEqual(0, ((JArray)document["cardBacks"]).Count);
             Assert.AreEqual(1, _provider.Reads);
         }
         [DataTestMethod]

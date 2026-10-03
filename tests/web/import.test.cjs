@@ -19,6 +19,16 @@ test('schema3 import retains permanent/premium counts and dust', () => {
   assert.equal(profile.goldenCards, 1);
   assert.equal(profile.availableDust, 123);
   assert.equal(profile.setBreakdown[0].unique, 1);
+  assert.equal(profile.coverageText, '100% в импортированных данных');
+});
+
+test('completion uses the full catalog, excludes special sets and ignores duplicate rows', () => {
+  const card = fixture.cards[0];
+  const all = [{ id: card.cardId, dbfId: card.dbfId, set: card.set }, { id: 'MISSING', dbfId: 999, set: card.set }, { id: 'CORE', set: 'CORE' }, { id: 'EVENT', set: 'EVENT' }];
+  const catalog = { ...lookup, loaded: true, all, byId: new Map(all.map(c => [c.id, c])), byDbf: new Map(), bySet: new Map() };
+  const profile = context.importApi.buildProfile({ ...fixture, cards: [card, card] }, 'fixture.json', catalog);
+  assert.equal(profile.coverageRatio, 0.5);
+  assert.equal(profile.coverageText, '50% коллекционных карт каталога');
 });
 test('account IDs beyond JS integer precision are extracted exactly', () => {
   const user = context.importApi.extractRawUserIdentifiers(raw);

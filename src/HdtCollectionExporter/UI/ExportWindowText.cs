@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using HdtCollectionExporter.Models;
 
 namespace HdtCollectionExporter.UI
 {
@@ -26,8 +27,84 @@ namespace HdtCollectionExporter.UI
         {
             get { string[] values; return Words.TryGetValue(key, out values) ? values[IsRussian ? 0 : 1] : key; }
         }
+        public object GroupDisplay(CollectionGroup group, bool rarity)
+        {
+            var code = (group.Name ?? "").ToUpperInvariant();
+            string title;
+            if(string.IsNullOrEmpty(code)) title = IsRussian ? "Другие" : "Other";
+            else if(rarity && Words.ContainsKey("Rarity" + code)) title = this["Rarity" + code];
+            else if(IsRussian && SetNames.TryGetValue(code, out title)) { }
+            else title = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(code.Replace('_', ' ').ToLowerInvariant());
+            var culture = CultureInfo.GetCultureInfo(IsRussian ? "ru-RU" : "en-US");
+            var detail = group.Total > 0 ? string.Format(culture, IsRussian ? "{0:N0} из {1:N0} карт · {2:P0}" : "{0:N0} of {1:N0} cards · {2:P0}", group.CatalogOwned, group.Total, (double)group.CatalogOwned / group.Total)
+                : string.Format(culture, IsRussian ? "{0:N0} уникальных карт" : "{0:N0} unique cards", group.Cards);
+            return new { Title = title, Detail = detail + string.Format(culture, IsRussian ? "\n{0:N0} копий" : "\n{0:N0} copies", group.Copies), Completion = group.Total > 0 ? 100.0 * group.CatalogOwned / group.Total : 0.0 };
+        }
+        private static readonly Dictionary<string, string> SetNames = new Dictionary<string, string>
+        {
+            {"CORE", "Основной набор"},
+            {"VANILLA", "Базовый набор"},
+            {"LEGACY", "Старый набор"},
+            {"LETTUCE", "Наемники"},
+            {"EXPERT1", "Классический набор"},
+            {"EVENT", "Событийные карты"},
+            {"HERO_SKINS", "Портреты героев"},
+            {"PLACEHOLDER_202204", "Основной набор"},
+            {"NAXX", "Проклятие Наксрамаса"},
+            {"FP1", "Проклятие Наксрамаса"},
+            {"GVG", "Гоблины и гномы"},
+            {"PE1", "Гоблины и гномы"},
+            {"BRM", "Чёрная гора"},
+            {"FP2", "Чёрная гора"},
+            {"BLACKROCK_MOUNTAIN", "Чёрная гора"},
+            {"TGT", "Большой турнир"},
+            {"TEMP1", "Большой турнир"},
+            {"LOE", "Лига исследователей"},
+            {"OG", "Пробуждение древних богов"},
+            {"OLD_GODS", "Пробуждение древних богов"},
+            {"KARA", "Вечеринка в Каражане"},
+            {"GANGS", "Злачный город Прибамбасск"},
+            {"GADGETZAN", "Злачный город Прибамбасск"},
+            {"UNGORO", "Экспедиция в Ун’Горо"},
+            {"ICECROWN", "Рыцари Ледяного Трона"},
+            {"LOOTAPALOOZA", "Кобольды и катакомбы"},
+            {"GILNEAS", "Ведьмин лес"},
+            {"BOOMSDAY", "Проект Бумного Дня"},
+            {"TROLL", "Растахановы игрища"},
+            {"DALARAN", "Возмездие теней"},
+            {"ULDUM", "Спасители Ульдума"},
+            {"DRAGONS", "Натиск драконов"},
+            {"YEAR_OF_THE_DRAGON", "Пробуждение Галакронда"},
+            {"BLACK_TEMPLE", "Руины Запределья"},
+            {"DEMON_HUNTER_INITIATE", "Руины Запределья"},
+            {"SCHOLOMANCE", "Некроситет"},
+            {"DARKMOON_FAIRE", "Ярмарка безумия"},
+            {"THE_BARRENS", "Закаленные Степями"},
+            {"STORMWIND", "Сплоченные Штормградом"},
+            {"ALTERAC_VALLEY", "Разделенные Альтераком"},
+            {"THE_SUNKEN_CITY", "Путешествие в Затонувший город"},
+            {"REVENDRETH", "Убийство в замке Нафрия"},
+            {"RETURN_OF_THE_LICH_KING", "Марш Короля-лича"},
+            {"PATH_OF_ARTHAS", "Марш Короля-лича"},
+            {"BATTLE_OF_THE_BANDS", "Фестиваль легенд"},
+            {"TITANS", "ТИТАНЫ"},
+            {"WILD_WEST", "Битва в Бесплодных землях"},
+            {"WHIZBANGS_WORKSHOP", "Мастерская Чудастера"},
+            {"ISLAND_VACATION", "Раздор в тропиках"},
+            {"SPACE", "Великая Запредельная Тьма"},
+            {"EMERALD_DREAM", "Объятия Изумрудного Сна"},
+            {"THE_LOST_CITY", "Затерянный город Ун'Горо"},
+            {"TIME_TRAVEL", "Сквозь потоки времени"},
+            {"WONDERS", "Пещеры времени"},
+            {"CATACLYSM", "Катаклизм"},
+        };
         private static readonly IDictionary<string, string[]> Words = new Dictionary<string, string[]>
         {
+            {"RarityCOMMON", new[]{"Обычные", "Common"}},
+            {"RarityRARE", new[]{"Редкие", "Rare"}},
+            {"RarityEPIC", new[]{"Эпические", "Epic"}},
+            {"RarityLEGENDARY", new[]{"Легендарные", "Legendary"}},
+            {"RarityFREE", new[]{"Бесплатные", "Free"}},
             {"Title",new[]{"Ваша коллекция", "Your collection"}},
             {"Subtitle",new[]{"Снимки Hearthstone. Всё хранится на вашем компьютере.", "Hearthstone snapshots. Everything stays on your computer."}},
             {"Refresh",new[]{"↻  Обновить", "↻  Refresh"}},
@@ -85,6 +162,7 @@ namespace HdtCollectionExporter.UI
             {"WaitingRead",new[]{"HDT пока не получил коллекцию. Следующая попытка через 15 секунд; можно обновить вручную.", "HDT has not received the collection yet. Retrying in 15 seconds; you can also refresh manually."}},
             {"Failed",new[]{"Операция не завершена. Проверьте аккаунт, базу сравнения и доступ к папке. Подробности: {0}", "The operation failed. Check the account, baseline and destination access. Details: {0}"}},
             {"Saved",new[]{"Сохранено файлов: {0} · {1}. Полный снимок добавлен в историю.", "Files saved: {0} · {1}. A full snapshot was added to history."}},
+            {"HistorySaved",new[]{"Сравнение сохранено: {0} файла · {1}. База сравнения сохранена без изменений.", "Comparison saved: {0} files · {1}. Baseline unchanged."}},
             {"BaselineSaved",new[]{"База сохранена. Файл изменений не создавался.", "Baseline saved. No changes file was created."}},
             {"BaselineSaveFailed",new[]{"Файлы экспорта сохранены, но база и история не обновлены. Проверьте доступ к папке данных.", "Export files were saved, but baseline/history were not updated. Check data-folder access."}},
             {"Partial",new[]{"Часть файлов сохранена: {0}. База не обновлена. Повторите экспорт после проверки папки.", "Some files were saved: {0}. Baseline was not advanced. Check the folder and retry."}},

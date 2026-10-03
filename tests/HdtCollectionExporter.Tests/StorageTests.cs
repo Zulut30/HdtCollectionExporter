@@ -119,8 +119,10 @@ namespace HdtCollectionExporter.Tests
         {
             var first = _store.Save(_document, true);
             _document.ExportedAt = "2099-01-01T00:00:00+00:00"; _store.Save(_document, true);
+            var corrupt = Path.Combine(Path.GetDirectoryName(first.Path), "corrupt.json"); File.WriteAllText(corrupt, "broken");
             _store.Prune(_document.User, 1);
-            Assert.IsTrue(File.Exists(first.Path)); Assert.AreEqual(2, _store.History(_document.User).Count);
+            Assert.IsTrue(File.Exists(first.Path)); Assert.IsTrue(File.Exists(corrupt));
+            Assert.AreEqual(2, _store.History(_document.User).Count(h => h.IsValid));
             Assert.ThrowsException<ArgumentOutOfRangeException>(() => _store.Prune(_document.User, 0));
         }
         [TestMethod] public void HistorySelectionChangesOnlyPointer()

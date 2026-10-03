@@ -149,7 +149,7 @@ struct ManacostCollectionExportDocument: Codable {
         exportedAt: String,
         source: String,
         version: Int,
-        user: ManacostUserProfileRecord?,
+        user: ManacostUserProfileRecord,
         dust: Int,
         cardBacks: [Int],
         favoriteCardBack: Int,
@@ -185,7 +185,7 @@ struct ManacostCollectionExportDocument: Codable {
         exportedAt = try container.decodeIfPresent(String.self, forKey: .exportedAt) ?? ""
         source = try container.decodeIfPresent(String.self, forKey: .source) ?? ""
         version = try container.decodeIfPresent(Int.self, forKey: .version) ?? 1
-        user = try container.decodeIfPresent(ManacostUserProfileRecord.self, forKey: .user)
+        user = try container.decode(ManacostUserProfileRecord.self, forKey: .user)
         dust = try container.decodeIfPresent(Int.self, forKey: .dust) ?? 0
         cardBacks = try container.decodeIfPresent([Int].self, forKey: .cardBacks) ?? []
         favoriteCardBack = try container.decodeIfPresent(Int.self, forKey: .favoriteCardBack) ?? 0

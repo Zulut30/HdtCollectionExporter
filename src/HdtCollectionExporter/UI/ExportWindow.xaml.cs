@@ -134,7 +134,8 @@ namespace HdtCollectionExporter.UI
             }
             else { PreviewText.Text = string.Format(T("PreviewFull"), _preview.OwnedCards, _preview.Copies); ExportButton.Content = T("Save"); }
             SummaryHint.Text = string.Format(T(_preview.Catalog != null && _preview.Catalog.Count > 0 ? "SummaryCatalog" : "SummaryHint"), _preview.Trial);
-            SetsList.ItemsSource = _preview.Sets; RaritiesList.ItemsSource = _preview.Rarities;
+            SetsList.ItemsSource = _preview.Sets.Select(g => _text.GroupDisplay(g, false)).ToList();
+            RaritiesList.ItemsSource = _preview.Rarities.Select(g => _text.GroupDisplay(g, true)).ToList();
             ExportButton.IsEnabled = !_busy;
             UpdateHistory();
         }
@@ -209,7 +210,7 @@ namespace HdtCollectionExporter.UI
         private async void ExportClicked(object sender, RoutedEventArgs e)
         {
             if(_preview == null) return;
-            if(DateTimeOffset.Now - _preview.ReadAt > TimeSpan.FromMinutes(5)) { await RefreshAsync(); return; }
+            if(DateTimeOffset.Now - _preview.ReadAt > TimeSpan.FromMinutes(5)) { await RefreshAsync(); if(_preview == null) return; }
             Persist();
             var format = FormatBox.SelectedIndex == 0 ? ExportFormat.Json : FormatBox.SelectedIndex == 1 ? ExportFormat.Csv : ExportFormat.Both;
             var options = Options(); var changes = ModeBox.SelectedIndex == 1; var preview = _preview;
@@ -252,7 +253,7 @@ namespace HdtCollectionExporter.UI
             var first = EarlierBox.SelectedItem as HistoryEntry; var second = LaterBox.SelectedItem as HistoryEntry;
             if(first == null || second == null) { StatusText.Text = T("ChooseHistory"); return; }
             var folder = OutputFolderTextBox.Text;
-            await RunAsync("Saving", async token => { var files = await _service.ExportHistoryAsync(first.Path, second.Path, folder, token); if(_lifetime.IsCancellationRequested) return; Result(files.First()); StatusText.Text = string.Format(T("Saved"), files.Count, Path.GetFileName(files.First())); });
+            await RunAsync("Saving", async token => { var files = await _service.ExportHistoryAsync(first.Path, second.Path, folder, token); if(_lifetime.IsCancellationRequested) return; Result(files.First()); StatusText.Text = string.Format(T("HistorySaved"), files.Count, Path.GetFileName(files.First())); });
         }
         private void PruneClicked(object sender, RoutedEventArgs e)
         {

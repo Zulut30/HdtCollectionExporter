@@ -1051,8 +1051,15 @@ function buildProfile(data, fileName, cardLookup, settings = defaultSettings) {
     findBestClassByWins(data.classStats) ||
     favoriteClass;
 
-  const coverageRatio = visibleRows.length ? ownedRows.length / visibleRows.length : 0;
-  const completionLabel = `${Math.round(clamp(coverageRatio, 0, 1) * 100)}% всей коллекции`;
+  const catalogRows = cardLookup && cardLookup.loaded && Array.isArray(cardLookup.all)
+    ? cardLookup.all.filter((card) => !hiddenProfileSetCodes.has(String(card.set || "").toUpperCase()))
+    : [];
+  const catalogIds = new Set(catalogRows.map((card) => String(card.id || "")));
+  const ownedCatalogIds = new Set(ownedRows.map((card) => findCardMeta(card, cardLookup))
+    .filter((card) => card && catalogIds.has(card.id)).map((card) => card.id));
+  const coverageRatio = catalogIds.size ? ownedCatalogIds.size / catalogIds.size
+    : visibleRows.length ? ownedRows.length / visibleRows.length : 0;
+  const completionLabel = `${Math.round(clamp(coverageRatio, 0, 1) * 100)}% ${catalogIds.size ? "коллекционных карт каталога" : "в импортированных данных"}`;
   const exportedDate = formatDate(data.exportedAt);
   const cardRowsLabel = `${formatNumber(cards.length)} строк карт`;
 
