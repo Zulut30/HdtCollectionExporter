@@ -384,19 +384,15 @@ final class ManacostCollectionExporter {
             ? nil
             : ManacostValueChange(previous: previous.bestClassByWins, current: current.bestClassByWins)
 
+        // Give the compiler explicit Int operands instead of a long overloaded
+        // addition expression with optional/generic branches.
+        let changeCounts: [Int] = [cardChanges.count, dustChange == nil ? 0 : 1,
+            cardBackChanges.added.count, cardBackChanges.removed.count,
+            favoriteCardBackChange == nil ? 0 : 1, favoriteHeroChanges.added.count,
+            favoriteHeroChanges.removed.count, playerRecordChanges.count, classStatChanges.count,
+            favoriteClassChange == nil ? 0 : 1, bestClassByWinsChange == nil ? 0 : 1, userChange == nil ? 0 : 1]
         let summary = ManacostCollectionDeltaSummary(
-            totalChanges: cardChanges.count
-                + (dustChange == nil ? 0 : 1)
-                + cardBackChanges.added.count
-                + cardBackChanges.removed.count
-                + (favoriteCardBackChange == nil ? 0 : 1)
-                + favoriteHeroChanges.added.count
-                + favoriteHeroChanges.removed.count
-                + playerRecordChanges.count
-                + classStatChanges.count
-                + (favoriteClassChange == nil ? 0 : 1)
-                + (bestClassByWinsChange == nil ? 0 : 1)
-                + (userChange == nil ? 0 : 1),
+            totalChanges: changeCounts.reduce(0, +),
             cardChanges: cardChanges.count,
             cardsAdded: cardChanges.filter { $0.changeType == "added" }.count,
             cardsRemoved: cardChanges.filter { $0.changeType == "removed" }.count,

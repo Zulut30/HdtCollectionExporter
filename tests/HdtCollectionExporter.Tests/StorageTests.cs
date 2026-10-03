@@ -133,6 +133,16 @@ namespace HdtCollectionExporter.Tests
             Assert.AreEqual(2, _store.History(_document.User).Count);
             Assert.ThrowsException<InvalidOperationException>(() => _store.UseAsBaseline(first.Path, new UserProfileRecord { AccountLo = 10 }));
         }
+        [TestMethod] public void HistoryOrdersByInstantAndCountsOwnedCards()
+        {
+            _document.ExportedAt = "2026-01-01T12:00:00+02:00"; var first = _store.Save(_document, true);
+            _document.ExportedAt = "2026-01-01T11:00:00+00:00";
+            _document.Cards.Add(new CollectionCardRecordJson { CardId = "UNOWNED", DbfId = 99 });
+            var second = _store.Save(_document, true);
+            var history = _store.History(_document.User);
+            CollectionAssert.AreEqual(new[] { second.Path, first.Path }, history.Select(h => h.Path).ToArray());
+            Assert.AreEqual(1, history[0].Cards); Assert.AreEqual(1, history[1].Cards);
+        }
         [TestMethod] public void SettingsRoundTripAndBackupRecovery()
         {
             var settings = new PluginSettings { OutputFolder = "C:\\Снимки", Language = "ru", IncludeMetadata = false, FormatIndex = 1 };

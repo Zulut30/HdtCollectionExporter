@@ -39,12 +39,15 @@ jobs:
             src/HdtCollectionExporter/bin/x64/${{ matrix.configuration }}/HdtCollectionExporter.dll
   macos-source:
     runs-on: macos-14
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Parse adapter and AppKit menu
         run: swiftc -frontend -parse macos/HSTrackerManacostExporter/*.swift
-      - name: Typecheck export adapter boundary
-        run: swiftc -typecheck macos/HSTrackerManacostExporter/ManacostCollectionExportModels.swift macos/HSTrackerManacostExporter/ManacostSnapshotStore.swift macos/HSTrackerManacostExporter/ManacostCollectionExporter.swift tests/macos/HSTrackerStubs.swift
+      - name: Build and test export adapter boundary
+        run: |
+          swiftc macos/HSTrackerManacostExporter/ManacostCollectionExportModels.swift macos/HSTrackerManacostExporter/ManacostSnapshotStore.swift macos/HSTrackerManacostExporter/ManacostCollectionExporter.swift tests/macos/HSTrackerStubs.swift tests/macos/adapter/main.swift -o /tmp/manacost-adapter-tests
+          /tmp/manacost-adapter-tests tests/fixtures/collection-v3.json
       - name: Shared schema and storage fixture
         run: |
           swiftc macos/HSTrackerManacostExporter/ManacostCollectionExportModels.swift macos/HSTrackerManacostExporter/ManacostSnapshotStore.swift tests/macos/main.swift -o /tmp/manacost-fixture-tests

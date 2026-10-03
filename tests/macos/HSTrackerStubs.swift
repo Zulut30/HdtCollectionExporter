@@ -13,7 +13,8 @@ struct FixtureCard {
     let playerClass: FixtureCardClass
 }
 enum Cards {
-    static func by(dbfId: Int, collectible: Bool) -> FixtureCard? { nil }
+    static var fixture: [Int: FixtureCard] = [:]
+    static func by(dbfId: Int, collectible: Bool) -> FixtureCard? { fixture[dbfId] }
 }
 struct FixtureCollection {
     let collection: [Int: [Int]]
@@ -28,6 +29,9 @@ struct FixtureCollection {
 }
 struct FixtureCollectionHelpers {
     func updateCollection() {}
-    func getCollection() -> FixtureCollection? { nil }
+    func getCollection() -> FixtureCollection? { CollectionHelpers.fixture }
 }
-enum CollectionHelpers { static let hearthstone = FixtureCollectionHelpers() }
+enum CollectionHelpers {
+    static let hearthstone = FixtureCollectionHelpers()
+    static var fixture: FixtureCollection?
+}
