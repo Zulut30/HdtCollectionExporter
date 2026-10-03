@@ -1,4 +1,4 @@
-# Поддержка HSTracker на macOS
+﻿# Поддержка HSTracker на macOS
 
 В репозиторий добавлен source-level адаптер экспорта Manacost для [HearthSim/HSTracker](https://github.com/HearthSim/HSTracker).
 
@@ -119,4 +119,4 @@ Baseline-файл:
 
 ## Version 1.6 validation boundary
 
-The source adapter now retains complete counts, UInt64 identifiers, account-specific immutable history, historical comparison and atomic output staging. Legacy baseline files are preserved and treated as incomplete. Add all four Swift files to the HSTracker target. CI parses the adapter and compiles/runs the shared models/storage fixture. This does not prove a native HSTracker build or its AppKit menu; those still require integration and manual testing on macOS.
+The source adapter now retains complete counts, UInt64 identifiers, account-specific immutable history, historical comparison and atomic output staging. Legacy baseline files are preserved and treated as incomplete. Add all four Swift files to the HSTracker target. CI parses the menu, builds/tests the export adapter with HSTracker boundary doubles, and compiles/runs the shared models/storage fixture. This does not prove a native HSTracker build or its AppKit menu; those still require integration and manual testing on macOS.

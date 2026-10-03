@@ -1,4 +1,4 @@
-<p align="center">
+﻿<p align="center">
   <img src="src/HdtCollectionExporter/Assets/manacost_logo.jpg" alt="Manacost banner" width="820" />
 </p>
 
@@ -205,4 +205,4 @@ node --test tests/web/import.test.cjs
 .\scripts\package.ps1 -Version 1.6.0
 ```
 
-Windows CI builds Debug/Release, runs regression tests and initializes the two UI languages in an x64 STA process. macOS CI parses the source adapter and tests models/storage with the shared synthetic fixture. Native HSTracker integration and its menu still need a macOS integration build and manual validation. See [release notes](docs/RELEASE_NOTES-1.6.0.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.ru.md).
+Windows CI builds Debug/Release, runs regression tests and initializes the two UI languages in an x64 STA process. macOS CI builds/tests the export adapter with HSTracker boundary doubles and tests models/storage with the shared synthetic fixture. Native HSTracker integration and its menu still need a macOS integration build and manual validation. See [release notes](docs/RELEASE_NOTES-1.6.0.md) and [implementation plan](docs/IMPLEMENTATION_PLAN.ru.md).
