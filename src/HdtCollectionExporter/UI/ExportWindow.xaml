@@ -21,8 +21,30 @@
     </ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter>
   </Style>
   <Style TargetType="TextBox"><Setter Property="Background" Value="#111722"/><Setter Property="Foreground" Value="#E9EDF4"/><Setter Property="BorderBrush" Value="#3A4558"/><Setter Property="Padding" Value="10"/><Setter Property="VerticalContentAlignment" Value="Center"/><Setter Property="SelectionBrush" Value="#71613C"/></Style>
-  <Style TargetType="ComboBox"><Setter Property="Padding" Value="10,8"/><Setter Property="MinHeight" Value="38"/><Setter Property="Foreground" Value="#152033"/><Setter Property="Background" Value="#DDE3EC"/></Style>
-  <Style TargetType="ComboBoxItem"><Setter Property="Foreground" Value="#152033"/><Setter Property="Padding" Value="10,7"/></Style>
+  <Style TargetType="ComboBox"><Setter Property="MinHeight" Value="40"/><Setter Property="Foreground" Value="#E9EDF4"/><Setter Property="Background" Value="#111722"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBox">
+    <Grid><Border x:Name="ComboChrome" Background="{TemplateBinding Background}" BorderBrush="#3A4558" BorderThickness="1" CornerRadius="8"/>
+     <ToggleButton Focusable="False" ClickMode="Press" IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+      <ToggleButton.Template><ControlTemplate TargetType="ToggleButton"><Border Background="Transparent"><TextBlock Text="⌄" Foreground="#9AA6B7" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,12,3" FontSize="18"/></Border></ControlTemplate></ToggleButton.Template>
+     </ToggleButton>
+     <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" IsHitTestVisible="False" VerticalAlignment="Center" Margin="12,6,32,6"/>
+     <Popup x:Name="PART_Popup" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" AllowsTransparency="True" Focusable="False" PopupAnimation="Fade">
+      <Border Background="#202938" BorderBrush="#3A4558" BorderThickness="1" CornerRadius="8" Margin="0,4,0,0" MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}">
+       <ScrollViewer MaxHeight="320" Margin="4"><ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained"/></ScrollViewer>
+      </Border>
+     </Popup>
+    </Grid><ControlTemplate.Triggers>
+     <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="ComboChrome" Property="BorderBrush" Value="#E8BD71"/></Trigger>
+     <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="ComboChrome" Property="BorderBrush" Value="#71819A"/></Trigger>
+     <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.4"/></Trigger>
+    </ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
+  <Style TargetType="ComboBoxItem"><Setter Property="Foreground" Value="#E9EDF4"/><Setter Property="Padding" Value="10,8"/>
+   <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBoxItem"><Border x:Name="ItemChrome" Background="Transparent" CornerRadius="5" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border>
+    <ControlTemplate.Triggers><Trigger Property="IsHighlighted" Value="True"><Setter TargetName="ItemChrome" Property="Background" Value="#35435A"/></Trigger><Trigger Property="IsSelected" Value="True"><Setter Property="Foreground" Value="#E8BD71"/></Trigger></ControlTemplate.Triggers>
+   </ControlTemplate></Setter.Value></Setter>
+  </Style>
   <Style TargetType="CheckBox"><Setter Property="Foreground" Value="#D6DFEB"/><Setter Property="Margin" Value="0,6,0,6"/></Style>
   <Style TargetType="TabItem"><Setter Property="Foreground" Value="#9AA6B7"/><Setter Property="Padding" Value="18,10"/><Setter Property="FontWeight" Value="SemiBold"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem">

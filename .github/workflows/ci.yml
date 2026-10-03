@@ -46,7 +46,7 @@ jobs:
         run: swiftc -frontend -parse macos/HSTrackerManacostExporter/*.swift
       - name: Build and test export adapter boundary
         run: |
-          swiftc macos/HSTrackerManacostExporter/ManacostCollectionExportModels.swift macos/HSTrackerManacostExporter/ManacostSnapshotStore.swift macos/HSTrackerManacostExporter/ManacostCollectionExporter.swift tests/macos/HSTrackerStubs.swift tests/macos/adapter/main.swift -o /tmp/manacost-adapter-tests
+          swiftc -Xfrontend -solver-expression-time-threshold=30 macos/HSTrackerManacostExporter/ManacostCollectionExportModels.swift macos/HSTrackerManacostExporter/ManacostSnapshotStore.swift macos/HSTrackerManacostExporter/ManacostCollectionExporter.swift tests/macos/HSTrackerStubs.swift tests/macos/adapter/main.swift -o /tmp/manacost-adapter-tests
           /tmp/manacost-adapter-tests tests/fixtures/collection-v3.json
       - name: Shared schema and storage fixture
         run: |
