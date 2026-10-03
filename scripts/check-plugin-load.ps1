@@ -46,6 +46,24 @@ try {
         $window = [Activator]::CreateInstance($windowType, [object[]]@($settings, $service, [Action]{}, $text))
         foreach ($control in @('OutputFolderTextBox','StatusText','HistoryTab','SummaryTab','ExportButton','LanguageBox')) { if ($window.FindName($control) -eq $null) { throw "Missing WPF control: $control" } }
         if ($window.FindName('ExportButton').IsEnabled) { throw 'Export should be disabled until collection data is read.' }
+        # Realize templates with summary data: a read-only progress property
+        # must bind OneWay, otherwise WPF throws only when this tab is rendered.
+        $group = [Activator]::CreateInstance($assembly.GetType('HdtCollectionExporter.Models.CollectionGroup', $true))
+        $group.Name = 'TIME_TRAVEL'; $group.Cards = 1; $group.Copies = 2; $group.Total = 2; $group.CatalogOwned = 1
+        $window.FindName('SetsList').ItemsSource = @($text.GroupDisplay($group, $false))
+        $window.FindName('RaritiesList').ItemsSource = @($text.GroupDisplay($group, $true))
+        $window.FindName('Tabs').SelectedIndex = 2
+        $window.ApplyTemplate() | Out-Null
+        $window.Measure([Windows.Size]::new(940,790))
+        $window.Arrange([Windows.Rect]::new(0,0,940,790))
+        $window.UpdateLayout()
+        foreach($listName in @('SetsList','RaritiesList')) {
+            $list = $window.FindName($listName)
+            $list.Measure([Windows.Size]::new(400,245))
+            $list.Arrange([Windows.Rect]::new(0,0,400,245))
+            $list.UpdateLayout()
+            if($list.ItemContainerGenerator.ContainerFromIndex(0) -eq $null) { throw "Summary item template was not realized: $listName" }
+        }
         $windowTitles += $window.Title
         $window.Close()
     }

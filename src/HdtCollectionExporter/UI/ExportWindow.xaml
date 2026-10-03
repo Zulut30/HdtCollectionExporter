@@ -57,7 +57,7 @@
   <DataTemplate x:Key="SummaryRow">
    <StackPanel Margin="0,2,0,6"><TextBlock Text="{Binding Title}" FontWeight="SemiBold"/>
     <TextBlock Text="{Binding Detail}" Foreground="#9AA6B7" FontSize="12" Margin="0,5,0,8"/>
-    <ProgressBar Value="{Binding Completion}" Maximum="100" Height="3" Foreground="#E8BD71" Background="#303B4B"/>
+    <ProgressBar Value="{Binding Completion, Mode=OneWay}" Maximum="100" Height="3" Foreground="#E8BD71" Background="#303B4B"/>
    </StackPanel>
   </DataTemplate>
   <Style x:Key="Panel" TargetType="Border"><Setter Property="Background" Value="#1A2230"/><Setter Property="BorderBrush" Value="#2C384A"/><Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="12"/><Setter Property="Padding" Value="20"/></Style>
